@@ -89,18 +89,18 @@ export default function HotelsSection({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             Hotel Options
           </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             All prices shown are total. Individual costs shown in the breakdown. Sorted by votes.
           </p>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
         >
           {showAddForm ? (
             <>
@@ -127,13 +127,13 @@ export default function HotelsSection({
           }}
         >
           <h3 className="font-bold mb-4" style={{ color: 'var(--primary-dark)' }}>Add New Hotel</h3>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Hotel Name *"
               value={newHotel.name}
               onChange={(e) => setNewHotel({ ...newHotel, name: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
               required
             />
             <input
@@ -141,21 +141,21 @@ export default function HotelsSection({
               placeholder="Website URL"
               value={newHotel.url}
               onChange={(e) => setNewHotel({ ...newHotel, url: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Neighborhood"
               value={newHotel.neighborhood}
               onChange={(e) => setNewHotel({ ...newHotel, neighborhood: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Includes (perks)"
               value={newHotel.includes}
               onChange={(e) => setNewHotel({ ...newHotel, includes: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -163,7 +163,7 @@ export default function HotelsSection({
               placeholder="Total Price"
               value={newHotel.totalPrice || ''}
               onChange={(e) => setNewHotel({ ...newHotel, totalPrice: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -171,7 +171,7 @@ export default function HotelsSection({
               placeholder="Per Person"
               value={newHotel.perPerson || ''}
               onChange={(e) => setNewHotel({ ...newHotel, perPerson: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -179,7 +179,7 @@ export default function HotelsSection({
               placeholder="3-Night Tay"
               value={newHotel.price3NightTay || ''}
               onChange={(e) => setNewHotel({ ...newHotel, price3NightTay: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -187,7 +187,7 @@ export default function HotelsSection({
               placeholder="3-Night Scar"
               value={newHotel.price3NightScar || ''}
               onChange={(e) => setNewHotel({ ...newHotel, price3NightScar: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -195,7 +195,7 @@ export default function HotelsSection({
               placeholder="4-Night Tay"
               value={newHotel.price4NightTay || ''}
               onChange={(e) => setNewHotel({ ...newHotel, price4NightTay: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="number"
@@ -203,13 +203,13 @@ export default function HotelsSection({
               placeholder="4-Night Scar"
               value={newHotel.price4NightScar || ''}
               onChange={(e) => setNewHotel({ ...newHotel, price4NightScar: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <textarea
               placeholder="Notes"
               value={newHotel.notes}
               onChange={(e) => setNewHotel({ ...newHotel, notes: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400 md:col-span-2"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 sm:col-span-2"
               rows={2}
             />
           </div>
@@ -321,10 +321,10 @@ export default function HotelsSection({
                       rows={2}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
                       <CheckIcon size={14} />
@@ -332,7 +332,7 @@ export default function HotelsSection({
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -340,7 +340,7 @@ export default function HotelsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(hotel.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium ml-auto transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--accent)' }}
                     >
                       <TrashIcon size={14} />

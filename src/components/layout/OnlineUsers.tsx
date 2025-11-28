@@ -29,15 +29,18 @@ function getInitials(username: string): string {
 export default function OnlineUsers({ users, currentUsername }: OnlineUsersProps) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm" style={{ color: 'var(--satc-gold)' }}>
+      <span className="text-xs sm:text-sm" style={{ color: 'var(--text-muted)' }}>
         Online:
       </span>
-      <div className="flex -space-x-2">
+      <div className="flex -space-x-2 sm:-space-x-3">
         {users.map((user) => (
           <div
             key={user.sessionId}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white"
-            style={{ backgroundColor: getColorForUser(user.username) }}
+            className="w-10 h-10 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-white text-xs font-bold border-2"
+            style={{
+              backgroundColor: getColorForUser(user.username),
+              borderColor: 'var(--background)',
+            }}
             title={user.username + (user.username === currentUsername ? ' (you)' : '')}
           >
             {getInitials(user.username)}
@@ -45,7 +48,7 @@ export default function OnlineUsers({ users, currentUsername }: OnlineUsersProps
         ))}
       </div>
       {users.length === 0 && (
-        <span className="text-sm text-gray-400">No one else online</span>
+        <span className="text-xs sm:text-sm" style={{ color: 'var(--text-muted)' }}>No one else online</span>
       )}
     </div>
   )

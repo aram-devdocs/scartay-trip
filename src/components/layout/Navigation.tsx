@@ -8,23 +8,23 @@ interface NavigationProps {
 }
 
 const tabs = [
-  { id: 'flights', label: 'Flights', icon: PlaneIcon },
-  { id: 'hotels', label: 'Hotels', icon: BuildingIcon },
-  { id: 'activities', label: 'Activities', icon: StarIcon },
-  { id: 'food', label: 'Food & Drinks', icon: DollarSignIcon },
+  { id: 'flights', label: 'Flights', shortLabel: 'Flights', icon: PlaneIcon },
+  { id: 'hotels', label: 'Hotels', shortLabel: 'Hotels', icon: BuildingIcon },
+  { id: 'activities', label: 'Activities', shortLabel: 'Activities', icon: StarIcon },
+  { id: 'food', label: 'Food & Drinks', shortLabel: 'Food', icon: DollarSignIcon },
 ]
 
 export default function Navigation({ activeTab, onTabChange }: NavigationProps) {
   return (
     <nav
-      className="overflow-x-auto py-3"
+      className="overflow-x-auto py-2 sm:py-3"
       style={{
         background: 'var(--surface)',
         borderBottom: '1px solid var(--border-light)',
       }}
     >
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex gap-2">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="flex gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
@@ -33,8 +33,11 @@ export default function Navigation({ activeTab, onTabChange }: NavigationProps) 
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={`
-                  flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm
+                  flex items-center justify-center gap-1 sm:gap-2
+                  px-3 py-2 sm:px-5 sm:py-2.5
+                  rounded-full font-semibold text-xs sm:text-sm
                   transition-all duration-200 whitespace-nowrap
+                  min-h-[44px] min-w-[44px]
                   ${isActive ? 'scale-[1.02]' : 'hover:scale-[1.02]'}
                 `}
                 style={{
@@ -44,7 +47,8 @@ export default function Navigation({ activeTab, onTabChange }: NavigationProps) 
                 }}
               >
                 <Icon size={16} />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.shortLabel}</span>
               </button>
             )
           })}

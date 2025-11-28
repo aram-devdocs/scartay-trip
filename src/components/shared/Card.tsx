@@ -12,7 +12,7 @@ export default function Card({ children, className = '', highlighted = false }: 
   return (
     <div
       className={`
-        rounded-2xl p-5 transition-all duration-300 ease-out
+        rounded-2xl p-3 sm:p-5 transition-all duration-300 ease-out
         hover:translate-y-[-4px] hover:shadow-lg
         ${highlighted ? 'ring-2 ring-primary' : ''}
         ${className}

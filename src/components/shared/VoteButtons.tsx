@@ -27,12 +27,12 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
 
   return (
     <div
-      className="flex items-center gap-2 mt-4 pt-4"
+      className="flex items-center gap-2 mt-3 sm:mt-4 pt-3 sm:pt-4"
       style={{ borderTop: '1px solid var(--border-light)' }}
     >
       <button
         onClick={() => onVote(itemType, itemId, 'upvote')}
-        className="p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
         style={{
           background: userUpvote ? 'var(--gradient-primary)' : 'var(--border-light)',
           color: userUpvote ? 'white' : 'var(--text-muted)',
@@ -54,7 +54,7 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
 
       <button
         onClick={() => onVote(itemType, itemId, 'downvote')}
-        className="p-2 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
         style={{
           background: userDownvote ? 'var(--gradient-accent)' : 'var(--border-light)',
           color: userDownvote ? 'white' : 'var(--text-muted)',
@@ -67,7 +67,7 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
 
       {votes.length > 0 && (
         <div
-          className="text-xs ml-auto font-medium"
+          className="text-xs ml-auto font-medium hidden sm:block"
           style={{ color: 'var(--text-muted)' }}
         >
           {[...new Set(votes.map((v) => v.username))].join(', ')}

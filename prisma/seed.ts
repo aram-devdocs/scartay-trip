@@ -224,6 +224,17 @@ async function main() {
       priceRange: '$30 - $50',
       url: 'https://www.anixinyc.com/',
     },
+    {
+      name: "John's of East 12th Street",
+      address: '302 E 12th St, New York, NY 10003',
+      neighborhood: 'East Village',
+      foodOrDrink: 'Both',
+      veganOrOmni: 'Omni (Italian food with separate vegan menu)',
+      hours: '4-10 daily',
+      daysClosed: 'None',
+      priceRange: '$30 - $50',
+      url: 'https://www.johnsof12thstreet.com/',
+    },
   ]
 
   for (const restaurant of restaurants) {

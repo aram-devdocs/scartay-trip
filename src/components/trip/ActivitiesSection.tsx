@@ -77,18 +77,18 @@ export default function ActivitiesSection({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             Activities
           </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Things to do in NYC - sorted by votes
           </p>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
         >
           {showAddForm ? (
             <>
@@ -115,13 +115,13 @@ export default function ActivitiesSection({
           }}
         >
           <h3 className="font-bold mb-4" style={{ color: 'var(--primary)' }}>Add New Activity</h3>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Name *"
               value={newActivity.name}
               onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
               required
             />
             <input
@@ -129,42 +129,42 @@ export default function ActivitiesSection({
               placeholder="Website URL"
               value={newActivity.url}
               onChange={(e) => setNewActivity({ ...newActivity, url: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Address"
               value={newActivity.address}
               onChange={(e) => setNewActivity({ ...newActivity, address: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Neighborhood"
               value={newActivity.neighborhood}
               onChange={(e) => setNewActivity({ ...newActivity, neighborhood: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Hours"
               value={newActivity.hours}
               onChange={(e) => setNewActivity({ ...newActivity, hours: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Days Closed"
               value={newActivity.daysClosed}
               onChange={(e) => setNewActivity({ ...newActivity, daysClosed: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Price (e.g., $30 or Free)"
               value={newActivity.price}
               onChange={(e) => setNewActivity({ ...newActivity, price: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
           </div>
           <button type="submit" className="btn btn-primary mt-4">
@@ -235,10 +235,10 @@ export default function ActivitiesSection({
                       className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
                       <CheckIcon size={14} />
@@ -246,7 +246,7 @@ export default function ActivitiesSection({
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -254,7 +254,7 @@ export default function ActivitiesSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(activity.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium ml-auto transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--accent)' }}
                     >
                       <TrashIcon size={14} />

@@ -84,21 +84,21 @@ export default function FlightsSection({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
         <div>
           <h2
-            className="text-2xl font-bold tracking-tight"
+            className="text-xl sm:text-2xl font-bold tracking-tight"
             style={{ color: 'var(--text-primary)' }}
           >
             Flight Options
           </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Dates: March 26-29 (3 nights) or March 26-30 (4 nights) - sorted by votes
           </p>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
         >
           {showAddForm ? (
             <>
@@ -125,13 +125,13 @@ export default function FlightsSection({
           }}
         >
           <h3 className="font-bold mb-4" style={{ color: 'var(--primary)' }}>Add New Flight</h3>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Traveler Name *"
               value={newFlight.travelerName}
               onChange={(e) => setNewFlight({ ...newFlight, travelerName: e.target.value })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
               required
             />
             <input
@@ -139,7 +139,7 @@ export default function FlightsSection({
               placeholder="Airline"
               value={newFlight.airline}
               onChange={(e) => setNewFlight({ ...newFlight, airline: e.target.value })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
             />
             <input
               type="number"
@@ -147,7 +147,7 @@ export default function FlightsSection({
               placeholder="Price (3 nights)"
               value={newFlight.price3Night || ''}
               onChange={(e) => setNewFlight({ ...newFlight, price3Night: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
             />
             <input
               type="number"
@@ -155,27 +155,27 @@ export default function FlightsSection({
               placeholder="Price (4 nights)"
               value={newFlight.price4Night || ''}
               onChange={(e) => setNewFlight({ ...newFlight, price4Night: parseFloat(e.target.value) || 0 })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Inbound Flight (e.g., Delta 123 @ 8am)"
               value={newFlight.inboundFlight}
               onChange={(e) => setNewFlight({ ...newFlight, inboundFlight: e.target.value })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Outbound Flight (e.g., Delta 456 @ 6pm)"
               value={newFlight.outboundFlight}
               onChange={(e) => setNewFlight({ ...newFlight, outboundFlight: e.target.value })}
-              className="px-3 py-2 border rounded-xl"
+              className="px-3 py-2 border rounded-xl min-h-[44px]"
             />
             <textarea
               placeholder="Notes"
               value={newFlight.notes}
               onChange={(e) => setNewFlight({ ...newFlight, notes: e.target.value })}
-              className="px-3 py-2 border rounded-xl md:col-span-2"
+              className="px-3 py-2 border rounded-xl sm:col-span-2"
               rows={2}
             />
           </div>
@@ -251,10 +251,10 @@ export default function FlightsSection({
                       rows={2}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
                       <CheckIcon size={14} />
@@ -262,7 +262,7 @@ export default function FlightsSection({
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -270,7 +270,7 @@ export default function FlightsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(flight.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium ml-auto transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--accent)' }}
                     >
                       <TrashIcon size={14} />
@@ -308,30 +308,30 @@ export default function FlightsSection({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
                     <div
-                      className="p-3 rounded-xl"
+                      className="p-2 sm:p-3 rounded-xl"
                       style={{ background: 'var(--border-light)' }}
                     >
                       <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                         3 nights
                       </div>
                       <div
-                        className="text-xl font-bold"
+                        className="text-lg sm:text-xl font-bold"
                         style={{ color: 'var(--accent)' }}
                       >
                         ${flight.price3Night}
                       </div>
                     </div>
                     <div
-                      className="p-3 rounded-xl"
+                      className="p-2 sm:p-3 rounded-xl"
                       style={{ background: 'var(--border-light)' }}
                     >
                       <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                         4 nights
                       </div>
                       <div
-                        className="text-xl font-bold"
+                        className="text-lg sm:text-xl font-bold"
                         style={{ color: 'var(--accent)' }}
                       >
                         ${flight.price4Night}

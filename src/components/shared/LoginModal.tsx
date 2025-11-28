@@ -30,21 +30,21 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'var(--background)' }}>
-      <div className="rounded-lg shadow-xl p-8 max-w-md w-full mx-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-        <h2 className="text-2xl font-bold text-center mb-2" style={{ color: 'var(--primary)' }}>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--background)' }}>
+      <div className="rounded-2xl shadow-xl p-4 sm:p-8 max-w-md w-full" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+        <h2 className="text-xl sm:text-2xl font-bold text-center mb-2" style={{ color: 'var(--primary)' }}>
           Welcome to the NYC Girls Trip!
         </h2>
-        <p className="text-center mb-6" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-center mb-4 sm:mb-6 text-sm sm:text-base" style={{ color: 'var(--text-muted)' }}>
           Select your name and enter your PIN
         </p>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex gap-4 mb-4">
+          <div className="flex gap-3 sm:gap-4 mb-4">
             <button
               type="button"
               onClick={() => setSelectedName('Taylor')}
-              className="flex-1 py-4 rounded-lg font-semibold text-lg transition-all border-2"
+              className="flex-1 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-all border-2 min-h-[48px]"
               style={{
                 color: 'var(--text)',
                 borderColor: selectedName === 'Taylor' ? 'var(--primary)' : 'var(--border)',
@@ -56,7 +56,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             <button
               type="button"
               onClick={() => setSelectedName('Scarlett')}
-              className="flex-1 py-4 rounded-lg font-semibold text-lg transition-all border-2"
+              className="flex-1 py-3 sm:py-4 rounded-lg font-semibold text-base sm:text-lg transition-all border-2 min-h-[48px]"
               style={{
                 color: 'var(--text)',
                 borderColor: selectedName === 'Scarlett' ? 'var(--primary)' : 'var(--border)',
@@ -79,7 +79,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
               setError('')
             }}
             placeholder="Enter 4-digit PIN"
-            className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none text-lg text-center tracking-widest"
+            className="w-full px-4 py-3 border-2 rounded-lg focus:outline-none text-lg text-center tracking-widest min-h-[48px]"
             style={{
               background: 'var(--input-bg)',
               color: 'var(--text)',
@@ -95,7 +95,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
           <button
             type="submit"
             disabled={!selectedName || pin.length !== 4 || isLoading}
-            className="w-full mt-4 py-3 rounded-lg font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-4 py-3 rounded-lg font-semibold text-base sm:text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
             style={{
               background: selectedName && pin.length === 4 ? 'var(--primary)' : 'var(--border)',
               color: 'var(--text)',

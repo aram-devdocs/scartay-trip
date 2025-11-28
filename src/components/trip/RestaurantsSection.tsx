@@ -87,18 +87,18 @@ export default function RestaurantsSection({
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             Food & Drinks
           </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
             Restaurants, bars, and places to eat - sorted by votes
           </p>
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center gap-2"
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
         >
           {showAddForm ? (
             <>
@@ -125,13 +125,13 @@ export default function RestaurantsSection({
           }}
         >
           <h3 className="font-bold mb-4" style={{ color: 'var(--primary)' }}>Add New Restaurant/Bar</h3>
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Name *"
               value={newRestaurant.name}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, name: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
               required
             />
             <input
@@ -139,26 +139,26 @@ export default function RestaurantsSection({
               placeholder="Website URL"
               value={newRestaurant.url}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, url: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Address"
               value={newRestaurant.address}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, address: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Neighborhood"
               value={newRestaurant.neighborhood}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, neighborhood: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <select
               value={newRestaurant.foodOrDrink}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, foodOrDrink: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             >
               <option value="Food">Food</option>
               <option value="Drink">Drink</option>
@@ -167,7 +167,7 @@ export default function RestaurantsSection({
             <select
               value={newRestaurant.veganOrOmni}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, veganOrOmni: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             >
               <option value="Vegan">Vegan</option>
               <option value="Omni">Omni</option>
@@ -178,21 +178,21 @@ export default function RestaurantsSection({
               placeholder="Hours"
               value={newRestaurant.hours}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, hours: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Days Closed"
               value={newRestaurant.daysClosed}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, daysClosed: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <input
               type="text"
               placeholder="Price Range"
               value={newRestaurant.priceRange}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, priceRange: e.target.value })}
-              className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
           </div>
           <button type="submit" className="btn btn-primary mt-4">
@@ -281,10 +281,10 @@ export default function RestaurantsSection({
                       className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
                       <CheckIcon size={14} />
@@ -292,7 +292,7 @@ export default function RestaurantsSection({
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -300,7 +300,7 @@ export default function RestaurantsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(restaurant.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium ml-auto transition-all hover:scale-105"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
                       style={{ background: 'var(--accent)' }}
                     >
                       <TrashIcon size={14} />
@@ -310,11 +310,21 @@ export default function RestaurantsSection({
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-bold" style={{ color: 'var(--primary)' }}>
-                      <LinkName name={restaurant.name} url={restaurant.url} />
-                    </h3>
-                    <div className="flex items-center gap-1.5">
+                  <div className="mb-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-lg font-bold flex-1 min-w-0" style={{ color: 'var(--primary)' }}>
+                        <LinkName name={restaurant.name} url={restaurant.url} />
+                      </h3>
+                      <button
+                        onClick={() => handleEdit(restaurant)}
+                        className="p-2 rounded-full transition-all hover:scale-110 flex-shrink-0"
+                        style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
+                        title="Edit"
+                      >
+                        <PencilIcon size={14} />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       <span
                         className="text-xs px-2.5 py-1 rounded-full font-medium"
                         style={{ background: 'var(--gradient-primary)', color: 'white' }}
@@ -327,14 +337,6 @@ export default function RestaurantsSection({
                       >
                         {restaurant.veganOrOmni}
                       </span>
-                      <button
-                        onClick={() => handleEdit(restaurant)}
-                        className="p-2 rounded-full transition-all hover:scale-110 ml-1"
-                        style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
-                        title="Edit"
-                      >
-                        <PencilIcon size={14} />
-                      </button>
                     </div>
                   </div>
 
