@@ -17,6 +17,7 @@ import { Flight, Hotel, Activity, Restaurant, ItemType } from '@/types'
 import Header from '@/components/layout/Header'
 import Navigation from '@/components/layout/Navigation'
 import LoginModal from '@/components/shared/LoginModal'
+import PullToRefresh from '@/components/shared/PullToRefresh'
 import FlightsSection from '@/components/trip/FlightsSection'
 import HotelsSection from '@/components/trip/HotelsSection'
 import ActivitiesSection from '@/components/trip/ActivitiesSection'
@@ -44,7 +45,12 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('flights')
 
   // Use TanStack Query for data fetching - no more polling!
-  const { flights, hotels, activities, restaurants, isLoading: dataLoading } = useTripData()
+  const { flights, hotels, activities, restaurants, isLoading: dataLoading, refetchAll } = useTripData()
+
+  const handleRefresh = async () => {
+    await refetchAll()
+    toast.success('Refreshed!')
+  }
 
   // Mutations
   const voteMutation = useVoteMutation()
@@ -141,69 +147,71 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
-      <Header onlineUsers={onlineUsers} currentUsername={user.name} />
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+        <Header onlineUsers={onlineUsers} currentUsername={user.name} />
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {dataLoading && (
-          <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-            Loading trip data...
-          </div>
-        )}
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          {dataLoading && (
+            <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
+              Loading trip data...
+            </div>
+          )}
 
-        {!dataLoading && activeTab === 'flights' && (
-          <FlightsSection
-            flights={flights}
-            currentUsername={user.name}
-            onVote={handleVote}
-            onAddComment={handleAddComment}
-            onAdd={(data) => handleAdd('flight', data)}
-            onUpdate={(data) => handleUpdate('flight', data)}
-            onDelete={(id) => handleDelete('flight', id)}
-          />
-        )}
-        {!dataLoading && activeTab === 'hotels' && (
-          <HotelsSection
-            hotels={hotels}
-            currentUsername={user.name}
-            onVote={handleVote}
-            onAddComment={handleAddComment}
-            onAdd={(data) => handleAdd('hotel', data)}
-            onUpdate={(data) => handleUpdate('hotel', data)}
-            onDelete={(id) => handleDelete('hotel', id)}
-          />
-        )}
-        {!dataLoading && activeTab === 'activities' && (
-          <ActivitiesSection
-            activities={activities}
-            currentUsername={user.name}
-            onVote={handleVote}
-            onAddComment={handleAddComment}
-            onAdd={(data) => handleAdd('activity', data)}
-            onUpdate={(data) => handleUpdate('activity', data)}
-            onDelete={(id) => handleDelete('activity', id)}
-          />
-        )}
-        {!dataLoading && activeTab === 'food' && (
-          <RestaurantsSection
-            restaurants={restaurants}
-            currentUsername={user.name}
-            onVote={handleVote}
-            onAddComment={handleAddComment}
-            onAdd={(data) => handleAdd('restaurant', data)}
-            onUpdate={(data) => handleUpdate('restaurant', data)}
-            onDelete={(id) => handleDelete('restaurant', id)}
-          />
-        )}
-      </main>
+          {!dataLoading && activeTab === 'flights' && (
+            <FlightsSection
+              flights={flights}
+              currentUsername={user.name}
+              onVote={handleVote}
+              onAddComment={handleAddComment}
+              onAdd={(data) => handleAdd('flight', data)}
+              onUpdate={(data) => handleUpdate('flight', data)}
+              onDelete={(id) => handleDelete('flight', id)}
+            />
+          )}
+          {!dataLoading && activeTab === 'hotels' && (
+            <HotelsSection
+              hotels={hotels}
+              currentUsername={user.name}
+              onVote={handleVote}
+              onAddComment={handleAddComment}
+              onAdd={(data) => handleAdd('hotel', data)}
+              onUpdate={(data) => handleUpdate('hotel', data)}
+              onDelete={(id) => handleDelete('hotel', id)}
+            />
+          )}
+          {!dataLoading && activeTab === 'activities' && (
+            <ActivitiesSection
+              activities={activities}
+              currentUsername={user.name}
+              onVote={handleVote}
+              onAddComment={handleAddComment}
+              onAdd={(data) => handleAdd('activity', data)}
+              onUpdate={(data) => handleUpdate('activity', data)}
+              onDelete={(id) => handleDelete('activity', id)}
+            />
+          )}
+          {!dataLoading && activeTab === 'food' && (
+            <RestaurantsSection
+              restaurants={restaurants}
+              currentUsername={user.name}
+              onVote={handleVote}
+              onAddComment={handleAddComment}
+              onAdd={(data) => handleAdd('restaurant', data)}
+              onUpdate={(data) => handleUpdate('restaurant', data)}
+              onDelete={(id) => handleDelete('restaurant', id)}
+            />
+          )}
+        </main>
 
-      <footer
-        className="border-t py-4 text-center text-sm"
-        style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
-      >
-        XOXO, Scarlett & Taylor | NYC March 2025
-      </footer>
-    </div>
+        <footer
+          className="border-t py-4 text-center text-sm"
+          style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}
+        >
+          XOXO, Scarlett & Taylor | NYC March 2025
+        </footer>
+      </div>
+    </PullToRefresh>
   )
 }
