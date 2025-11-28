@@ -6,6 +6,8 @@ import Card from '@/components/shared/Card'
 import VoteButtons, { getVoteScore } from '@/components/shared/VoteButtons'
 import CommentThread from '@/components/shared/CommentThread'
 import LinkName from '@/components/shared/LinkName'
+import FilterBar, { FilterValues } from '@/components/shared/FilterBar'
+import { isPriceInRange, getPriceRange } from '@/utils/priceUtils'
 import { MapPinIcon, BuildingIcon, ClockIcon, XCircleIcon, DollarSignIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon } from '@/components/icons/Icons'
 
 interface RestaurantsSectionProps {
@@ -68,13 +70,60 @@ export default function RestaurantsSection({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newRestaurant, setNewRestaurant] = useState(emptyRestaurant)
 
-  const sortedRestaurants = useMemo(() => {
-    return [...restaurants].sort((a, b) => {
-      const scoreA = getVoteScore(a.votes || [])
-      const scoreB = getVoteScore(b.votes || [])
-      return scoreB - scoreA
-    })
+  // Filter state
+  const priceRangeBounds = useMemo(() => {
+    return getPriceRange(restaurants.map((r) => r.priceRange))
   }, [restaurants])
+
+  const [filters, setFilters] = useState<FilterValues>({
+    neighborhood: '',
+    cuisineTypes: [],
+    priceRange: [priceRangeBounds.min, priceRangeBounds.max],
+  })
+
+  // Get unique neighborhoods from data
+  const neighborhoods = useMemo(() => {
+    const uniqueNeighborhoods = new Set(
+      restaurants.map((r) => r.neighborhood).filter((n): n is string => !!n)
+    )
+    return Array.from(uniqueNeighborhoods).sort()
+  }, [restaurants])
+
+  // Get unique cuisine types from data (only show what exists)
+  const cuisineTypesInData = useMemo(() => {
+    const uniqueCuisines = new Set(
+      restaurants.map((r) => r.cuisineType).filter((c): c is string => !!c)
+    )
+    return Array.from(uniqueCuisines).sort()
+  }, [restaurants])
+
+  // Filter and sort restaurants
+  const filteredAndSortedRestaurants = useMemo(() => {
+    return [...restaurants]
+      .filter((restaurant) => {
+        // Neighborhood filter
+        if (filters.neighborhood && restaurant.neighborhood !== filters.neighborhood) {
+          return false
+        }
+        // Cuisine type filter
+        if (
+          filters.cuisineTypes.length > 0 &&
+          !filters.cuisineTypes.includes(restaurant.cuisineType || '')
+        ) {
+          return false
+        }
+        // Price range filter
+        if (!isPriceInRange(restaurant.priceRange, filters.priceRange[0], filters.priceRange[1])) {
+          return false
+        }
+        return true
+      })
+      .sort((a, b) => {
+        const scoreA = getVoteScore(a.votes || [])
+        const scoreB = getVoteScore(b.votes || [])
+        return scoreB - scoreA
+      })
+  }, [restaurants, filters])
 
   const handleEdit = (restaurant: Restaurant) => {
     setEditingId(restaurant.id)
@@ -137,6 +186,15 @@ export default function RestaurantsSection({
           )}
         </button>
       </div>
+
+      <FilterBar
+        neighborhoods={neighborhoods}
+        cuisineOptions={cuisineTypesInData}
+        priceRange={priceRangeBounds}
+        values={filters}
+        onChange={setFilters}
+        showCuisine={true}
+      />
 
       {showAddForm && (
         <form
@@ -237,7 +295,7 @@ export default function RestaurantsSection({
       )}
 
       <div className="grid md:grid-cols-2 gap-4 stagger-children">
-        {sortedRestaurants.map((restaurant) => (
+        {filteredAndSortedRestaurants.map((restaurant) => (
           <div
             key={restaurant.id}
             className="transition-all duration-500 ease-in-out"
@@ -448,6 +506,10 @@ export default function RestaurantsSection({
           </div>
         ))}
       </div>
+
+      {filteredAndSortedRestaurants.length === 0 && restaurants.length > 0 && (
+        <p className="text-center py-8 text-gray-400">No restaurants match the current filters</p>
+      )}
 
       {restaurants.length === 0 && (
         <p className="text-center py-8 text-gray-400">No restaurants added yet</p>

@@ -1,12 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { useUser } from '@/hooks/useUser'
 import { usePresence } from '@/hooks/usePresence'
+import {
+  useTripData,
+  useVoteMutation,
+  useCommentMutation,
+  useAddMutation,
+  useUpdateMutation,
+  useDeleteMutation,
+} from '@/hooks/useTripData'
 import { Flight, Hotel, Activity, Restaurant, ItemType } from '@/types'
 
-type CrudItemType = 'flight' | 'hotel' | 'activity' | 'restaurant'
 import Header from '@/components/layout/Header'
 import Navigation from '@/components/layout/Navigation'
 import LoginModal from '@/components/shared/LoginModal'
@@ -15,158 +22,114 @@ import HotelsSection from '@/components/trip/HotelsSection'
 import ActivitiesSection from '@/components/trip/ActivitiesSection'
 import RestaurantsSection from '@/components/trip/RestaurantsSection'
 
+type CrudItemType = 'flight' | 'hotel' | 'activity' | 'restaurant'
+
+function getItemLabel(itemType: CrudItemType) {
+  switch (itemType) {
+    case 'flight':
+      return 'Flight'
+    case 'hotel':
+      return 'Hotel'
+    case 'activity':
+      return 'Activity'
+    case 'restaurant':
+      return 'Restaurant'
+  }
+}
+
 export default function Home() {
-  const { user, isLoading, login } = useUser()
+  const { user, isLoading: userLoading, login } = useUser()
   const { onlineUsers } = usePresence(user?.name || null, user?.id || null)
 
   const [activeTab, setActiveTab] = useState('flights')
-  const [flights, setFlights] = useState<Flight[]>([])
-  const [hotels, setHotels] = useState<Hotel[]>([])
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [flightsRes, hotelsRes, activitiesRes, restaurantsRes] = await Promise.all([
-        fetch('/api/flights'),
-        fetch('/api/hotels'),
-        fetch('/api/activities'),
-        fetch('/api/restaurants'),
-      ])
+  // Use TanStack Query for data fetching - no more polling!
+  const { flights, hotels, activities, restaurants, isLoading: dataLoading } = useTripData()
 
-      setFlights(await flightsRes.json())
-      setHotels(await hotelsRes.json())
-      setActivities(await activitiesRes.json())
-      setRestaurants(await restaurantsRes.json())
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    }
-  }, [])
+  // Mutations
+  const voteMutation = useVoteMutation()
+  const commentMutation = useCommentMutation()
 
-  useEffect(() => {
-    // Delay initial fetch to next tick to avoid synchronous setState in effect
-    const initialFetch = setTimeout(fetchData, 0)
-    const interval = setInterval(fetchData, 5000) // Poll every 5 seconds for updates
-    return () => {
-      clearTimeout(initialFetch)
-      clearInterval(interval)
-    }
-  }, [fetchData])
+  const addFlightMutation = useAddMutation('flight')
+  const addHotelMutation = useAddMutation('hotel')
+  const addActivityMutation = useAddMutation('activity')
+  const addRestaurantMutation = useAddMutation('restaurant')
 
-  const handleVote = async (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => {
+  const updateFlightMutation = useUpdateMutation('flight')
+  const updateHotelMutation = useUpdateMutation('hotel')
+  const updateActivityMutation = useUpdateMutation('activity')
+  const updateRestaurantMutation = useUpdateMutation('restaurant')
+
+  const deleteFlightMutation = useDeleteMutation('flight')
+  const deleteHotelMutation = useDeleteMutation('hotel')
+  const deleteActivityMutation = useDeleteMutation('activity')
+  const deleteRestaurantMutation = useDeleteMutation('restaurant')
+
+  const handleVote = (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => {
     if (!user) return
-
-    try {
-      await fetch('/api/votes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: user.name,
-          voteType,
-          itemType,
-          itemId,
-        }),
-      })
-      fetchData()
-    } catch (error) {
-      console.error('Error voting:', error)
-    }
+    voteMutation.mutate({ username: user.name, itemType, itemId, voteType })
   }
 
-  const handleAddComment = async (itemType: ItemType, itemId: string, content: string) => {
+  const handleAddComment = (itemType: ItemType, itemId: string, content: string) => {
     if (!user) return
-
-    try {
-      await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: user.name,
-          content,
-          itemType,
-          itemId,
-        }),
-      })
-      fetchData()
-    } catch (error) {
-      console.error('Error adding comment:', error)
-    }
+    commentMutation.mutate({ username: user.name, content, itemType, itemId })
   }
 
-  const getApiPath = (itemType: CrudItemType) => {
-    switch (itemType) {
-      case 'flight': return 'flights'
-      case 'hotel': return 'hotels'
-      case 'activity': return 'activities'
-      case 'restaurant': return 'restaurants'
-    }
+  const handleAdd = (itemType: CrudItemType, data: Partial<Flight | Hotel | Activity | Restaurant>) => {
+    const mutation =
+      itemType === 'flight'
+        ? addFlightMutation
+        : itemType === 'hotel'
+          ? addHotelMutation
+          : itemType === 'activity'
+            ? addActivityMutation
+            : addRestaurantMutation
+
+    mutation.mutate(data, {
+      onSuccess: () => toast.success(`${getItemLabel(itemType)} added!`),
+      onError: () => toast.error(`Failed to add ${getItemLabel(itemType).toLowerCase()}`),
+    })
   }
 
-  const getItemLabel = (itemType: CrudItemType) => {
-    switch (itemType) {
-      case 'flight': return 'Flight'
-      case 'hotel': return 'Hotel'
-      case 'activity': return 'Activity'
-      case 'restaurant': return 'Restaurant'
-    }
+  const handleUpdate = (
+    itemType: CrudItemType,
+    data: Partial<Flight | Hotel | Activity | Restaurant> & { id: string }
+  ) => {
+    const mutation =
+      itemType === 'flight'
+        ? updateFlightMutation
+        : itemType === 'hotel'
+          ? updateHotelMutation
+          : itemType === 'activity'
+            ? updateActivityMutation
+            : updateRestaurantMutation
+
+    mutation.mutate(data, {
+      onSuccess: () => toast.success(`${getItemLabel(itemType)} updated!`),
+      onError: () => toast.error(`Failed to update ${getItemLabel(itemType).toLowerCase()}`),
+    })
   }
 
-  const handleAdd = async (itemType: CrudItemType, data: Partial<Flight | Hotel | Activity | Restaurant>) => {
-    try {
-      const res = await fetch(`/api/${getApiPath(itemType)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error('Failed to add')
-      toast.success(`${getItemLabel(itemType)} added!`)
-      fetchData()
-    } catch (error) {
-      console.error('Error adding item:', error)
-      toast.error(`Failed to add ${getItemLabel(itemType).toLowerCase()}`)
-    }
+  const handleDelete = (itemType: CrudItemType, id: string) => {
+    const mutation =
+      itemType === 'flight'
+        ? deleteFlightMutation
+        : itemType === 'hotel'
+          ? deleteHotelMutation
+          : itemType === 'activity'
+            ? deleteActivityMutation
+            : deleteRestaurantMutation
+
+    mutation.mutate(id, {
+      onSuccess: () => toast.success(`${getItemLabel(itemType)} deleted!`),
+      onError: () => toast.error(`Failed to delete ${getItemLabel(itemType).toLowerCase()}`),
+    })
   }
 
-  const handleUpdate = async (itemType: CrudItemType, data: Partial<Flight | Hotel | Activity | Restaurant> & { id: string }) => {
-    try {
-      const res = await fetch(`/api/${getApiPath(itemType)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error('Failed to update')
-      toast.success(`${getItemLabel(itemType)} updated!`)
-      fetchData()
-    } catch (error) {
-      console.error('Error updating item:', error)
-      toast.error(`Failed to update ${getItemLabel(itemType).toLowerCase()}`)
-    }
-  }
-
-  const handleDelete = async (itemType: CrudItemType, id: string) => {
-    try {
-      const res = await fetch(`/api/${getApiPath(itemType)}?id=${id}`, {
-        method: 'DELETE',
-      })
-      if (!res.ok) throw new Error('Failed to delete')
-      toast.success(`${getItemLabel(itemType)} deleted!`)
-      fetchData()
-    } catch (error) {
-      console.error('Error deleting item:', error)
-      toast.error(`Failed to delete ${getItemLabel(itemType).toLowerCase()}`)
-    }
-  }
-
-  if (isLoading) {
+  if (userLoading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: 'var(--background)' }}
-      >
-        <div
-          className="text-xl font-medium animate-pulse"
-          style={{ color: 'var(--primary)' }}
-        >
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="text-xl font-medium animate-pulse" style={{ color: 'var(--primary)' }}>
           Loading...
         </div>
       </div>
@@ -183,7 +146,13 @@ export default function Home() {
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {activeTab === 'flights' && (
+        {dataLoading && (
+          <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
+            Loading trip data...
+          </div>
+        )}
+
+        {!dataLoading && activeTab === 'flights' && (
           <FlightsSection
             flights={flights}
             currentUsername={user.name}
@@ -194,7 +163,7 @@ export default function Home() {
             onDelete={(id) => handleDelete('flight', id)}
           />
         )}
-        {activeTab === 'hotels' && (
+        {!dataLoading && activeTab === 'hotels' && (
           <HotelsSection
             hotels={hotels}
             currentUsername={user.name}
@@ -205,7 +174,7 @@ export default function Home() {
             onDelete={(id) => handleDelete('hotel', id)}
           />
         )}
-        {activeTab === 'activities' && (
+        {!dataLoading && activeTab === 'activities' && (
           <ActivitiesSection
             activities={activities}
             currentUsername={user.name}
@@ -216,7 +185,7 @@ export default function Home() {
             onDelete={(id) => handleDelete('activity', id)}
           />
         )}
-        {activeTab === 'food' && (
+        {!dataLoading && activeTab === 'food' && (
           <RestaurantsSection
             restaurants={restaurants}
             currentUsername={user.name}

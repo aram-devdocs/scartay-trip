@@ -6,6 +6,8 @@ import Card from '@/components/shared/Card'
 import VoteButtons, { getVoteScore } from '@/components/shared/VoteButtons'
 import CommentThread from '@/components/shared/CommentThread'
 import LinkName from '@/components/shared/LinkName'
+import FilterBar, { FilterValues } from '@/components/shared/FilterBar'
+import { isPriceInRange, getPriceRange } from '@/utils/priceUtils'
 import { MapPinIcon, BuildingIcon, ClockIcon, XCircleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon } from '@/components/icons/Icons'
 
 interface ActivitiesSectionProps {
@@ -34,13 +36,45 @@ export default function ActivitiesSection({
   const [showAddForm, setShowAddForm] = useState(false)
   const [newActivity, setNewActivity] = useState(emptyActivity)
 
-  const sortedActivities = useMemo(() => {
-    return [...activities].sort((a, b) => {
-      const scoreA = getVoteScore(a.votes || [])
-      const scoreB = getVoteScore(b.votes || [])
-      return scoreB - scoreA
-    })
+  // Filter state
+  const priceRangeBounds = useMemo(() => {
+    return getPriceRange(activities.map((a) => a.price))
   }, [activities])
+
+  const [filters, setFilters] = useState<FilterValues>({
+    neighborhood: '',
+    cuisineTypes: [],
+    priceRange: [priceRangeBounds.min, priceRangeBounds.max],
+  })
+
+  // Get unique neighborhoods from data
+  const neighborhoods = useMemo(() => {
+    const uniqueNeighborhoods = new Set(
+      activities.map((a) => a.neighborhood).filter((n): n is string => !!n)
+    )
+    return Array.from(uniqueNeighborhoods).sort()
+  }, [activities])
+
+  // Filter and sort activities
+  const filteredAndSortedActivities = useMemo(() => {
+    return [...activities]
+      .filter((activity) => {
+        // Neighborhood filter
+        if (filters.neighborhood && activity.neighborhood !== filters.neighborhood) {
+          return false
+        }
+        // Price range filter
+        if (!isPriceInRange(activity.price, filters.priceRange[0], filters.priceRange[1])) {
+          return false
+        }
+        return true
+      })
+      .sort((a, b) => {
+        const scoreA = getVoteScore(a.votes || [])
+        const scoreB = getVoteScore(b.votes || [])
+        return scoreB - scoreA
+      })
+  }, [activities, filters])
 
   const handleEdit = (activity: Activity) => {
     setEditingId(activity.id)
@@ -103,6 +137,14 @@ export default function ActivitiesSection({
           )}
         </button>
       </div>
+
+      <FilterBar
+        neighborhoods={neighborhoods}
+        priceRange={priceRangeBounds}
+        values={filters}
+        onChange={setFilters}
+        showCuisine={false}
+      />
 
       {showAddForm && (
         <form
@@ -175,7 +217,7 @@ export default function ActivitiesSection({
       )}
 
       <div className="grid md:grid-cols-2 gap-4 stagger-children">
-        {sortedActivities.map((activity) => (
+        {filteredAndSortedActivities.map((activity) => (
           <div
             key={activity.id}
             className="transition-all duration-500 ease-in-out"
@@ -337,6 +379,10 @@ export default function ActivitiesSection({
           </div>
         ))}
       </div>
+
+      {filteredAndSortedActivities.length === 0 && activities.length > 0 && (
+        <p className="text-center py-8 text-gray-400">No activities match the current filters</p>
+      )}
 
       {activities.length === 0 && (
         <p className="text-center py-8 text-gray-400">No activities added yet</p>
