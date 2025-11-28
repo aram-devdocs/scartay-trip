@@ -1,7 +1,7 @@
 'use client'
 
 import { Vote, ItemType } from '@/types'
-import { ArrowUpIcon, ArrowDownIcon } from '@/components/icons/Icons'
+import { ArrowUpIcon, ArrowDownIcon, LoaderIcon } from '@/components/icons/Icons'
 
 interface VoteButtonsProps {
   votes: Vote[]
@@ -9,6 +9,9 @@ interface VoteButtonsProps {
   itemId: string
   currentUsername: string
   onVote: (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => void
+  isVoting?: boolean
+  votingItemId?: string
+  votingType?: 'upvote' | 'downvote'
 }
 
 export function getVoteScore(votes: Vote[]): number {
@@ -17,13 +20,26 @@ export function getVoteScore(votes: Vote[]): number {
   return upvotes - downvotes
 }
 
-export default function VoteButtons({ votes, itemType, itemId, currentUsername, onVote }: VoteButtonsProps) {
+export default function VoteButtons({ 
+  votes, 
+  itemType, 
+  itemId, 
+  currentUsername, 
+  onVote,
+  isVoting = false,
+  votingItemId,
+  votingType,
+}: VoteButtonsProps) {
   const upvotes = votes.filter((v) => v.voteType === 'upvote')
   const downvotes = votes.filter((v) => v.voteType === 'downvote')
   const score = upvotes.length - downvotes.length
 
   const userUpvote = upvotes.find((v) => v.username === currentUsername)
   const userDownvote = downvotes.find((v) => v.username === currentUsername)
+
+  const isUpvoteLoading = isVoting && votingItemId === itemId && votingType === 'upvote'
+  const isDownvoteLoading = isVoting && votingItemId === itemId && votingType === 'downvote'
+  const isAnyLoading = isUpvoteLoading || isDownvoteLoading
 
   return (
     <div
@@ -32,7 +48,8 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
     >
       <button
         onClick={() => onVote(itemType, itemId, 'upvote')}
-        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+        disabled={isAnyLoading}
+        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         style={{
           background: userUpvote ? 'var(--gradient-primary)' : 'var(--border-light)',
           color: userUpvote ? 'white' : 'var(--text-muted)',
@@ -40,7 +57,7 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
         }}
         title="Upvote"
       >
-        <ArrowUpIcon size={18} />
+        {isUpvoteLoading ? <LoaderIcon size={18} /> : <ArrowUpIcon size={18} />}
       </button>
 
       <span
@@ -54,7 +71,8 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
 
       <button
         onClick={() => onVote(itemType, itemId, 'downvote')}
-        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+        disabled={isAnyLoading}
+        className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         style={{
           background: userDownvote ? 'var(--gradient-accent)' : 'var(--border-light)',
           color: userDownvote ? 'white' : 'var(--text-muted)',
@@ -62,7 +80,7 @@ export default function VoteButtons({ votes, itemType, itemId, currentUsername, 
         }}
         title="Downvote"
       >
-        <ArrowDownIcon size={18} />
+        {isDownvoteLoading ? <LoaderIcon size={18} /> : <ArrowDownIcon size={18} />}
       </button>
 
       {votes.length > 0 && (

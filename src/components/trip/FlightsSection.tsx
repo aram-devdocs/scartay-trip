@@ -5,7 +5,26 @@ import { Flight, ItemType } from '@/types'
 import Card from '@/components/shared/Card'
 import VoteButtons, { getVoteScore } from '@/components/shared/VoteButtons'
 import CommentThread from '@/components/shared/CommentThread'
-import { PlaneIcon, PlaneTakeoffIcon, AlertTriangleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon } from '@/components/icons/Icons'
+import { PlaneIcon, PlaneTakeoffIcon, AlertTriangleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon, LoaderIcon } from '@/components/icons/Icons'
+
+interface VotingState {
+  isVoting: boolean
+  votingItemId?: string
+  votingType?: 'upvote' | 'downvote'
+}
+
+interface CommentingState {
+  isAddingComment: boolean
+  addingCommentItemId?: string
+}
+
+interface MutationState {
+  isAdding: boolean
+  isUpdating: boolean
+  updatingId?: string
+  isDeleting: boolean
+  deletingId?: string
+}
 
 interface FlightsSectionProps {
   flights: Flight[]
@@ -15,6 +34,9 @@ interface FlightsSectionProps {
   onAdd: (data: Partial<Flight>) => void
   onUpdate: (data: Partial<Flight> & { id: string }) => void
   onDelete: (id: string) => void
+  votingState: VotingState
+  commentingState: CommentingState
+  mutationState: MutationState
 }
 
 const emptyFlight = {
@@ -35,6 +57,9 @@ export default function FlightsSection({
   onAdd,
   onUpdate,
   onDelete,
+  votingState,
+  commentingState,
+  mutationState,
 }: FlightsSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Flight>>({})
@@ -179,9 +204,13 @@ export default function FlightsSection({
               rows={2}
             />
           </div>
-          <button type="submit" className="btn btn-primary mt-4">
-            <PlusIcon size={16} />
-            Add Flight
+          <button 
+            type="submit" 
+            className="btn btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={mutationState.isAdding}
+          >
+            {mutationState.isAdding ? <LoaderIcon size={16} /> : <PlusIcon size={16} />}
+            {mutationState.isAdding ? 'Adding...' : 'Add Flight'}
           </button>
         </form>
       )}
@@ -254,15 +283,17 @@ export default function FlightsSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === flight.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
-                      <CheckIcon size={14} />
-                      Save
+                      {mutationState.isUpdating && mutationState.updatingId === flight.id ? <LoaderIcon size={14} /> : <CheckIcon size={14} />}
+                      {mutationState.isUpdating && mutationState.updatingId === flight.id ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === flight.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -270,11 +301,12 @@ export default function FlightsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(flight.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isDeleting && mutationState.deletingId === flight.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
-                      <TrashIcon size={14} />
-                      Delete
+                      {mutationState.isDeleting && mutationState.deletingId === flight.id ? <LoaderIcon size={14} /> : <TrashIcon size={14} />}
+                      {mutationState.isDeleting && mutationState.deletingId === flight.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -375,6 +407,9 @@ export default function FlightsSection({
                     itemId={flight.id}
                     currentUsername={currentUsername}
                     onVote={onVote}
+                    isVoting={votingState.isVoting}
+                    votingItemId={votingState.votingItemId}
+                    votingType={votingState.votingType}
                   />
 
                   <CommentThread
@@ -383,6 +418,8 @@ export default function FlightsSection({
                     itemId={flight.id}
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
+                    isAddingComment={commentingState.isAddingComment}
+                    addingCommentItemId={commentingState.addingCommentItemId}
                   />
                 </>
               )}
