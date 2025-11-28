@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Comment, ItemType } from '@/types'
-import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon } from '@/components/icons/Icons'
+import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon, LoaderIcon } from '@/components/icons/Icons'
 
 interface CommentThreadProps {
   comments: Comment[]
@@ -10,6 +10,8 @@ interface CommentThreadProps {
   itemId: string
   currentUsername: string
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
+  isAddingComment?: boolean
+  addingCommentItemId?: string
 }
 
 export default function CommentThread({
@@ -18,13 +20,17 @@ export default function CommentThread({
   itemId,
   currentUsername,
   onAddComment,
+  isAddingComment = false,
+  addingCommentItemId,
 }: CommentThreadProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [newComment, setNewComment] = useState('')
 
+  const isThisItemAddingComment = isAddingComment && addingCommentItemId === itemId
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newComment.trim()) {
+    if (newComment.trim() && !isThisItemAddingComment) {
       onAddComment(itemType, itemId, newComment.trim())
       setNewComment('')
     }
@@ -81,15 +87,16 @@ export default function CommentThread({
                 background: 'var(--input-bg)',
                 color: 'var(--text)',
               }}
+              disabled={isThisItemAddingComment}
             />
             <button
               type="submit"
-              disabled={!newComment.trim()}
-              className="px-4 py-2 rounded-lg text-white text-sm disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95"
+              disabled={!newComment.trim() || isThisItemAddingComment}
+              className="px-4 py-2 rounded-lg text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:hover:scale-100"
               style={{ background: 'var(--gradient-primary)' }}
             >
-              <SendIcon size={16} />
-              <span className="hidden sm:inline">Post</span>
+              {isThisItemAddingComment ? <LoaderIcon size={16} /> : <SendIcon size={16} />}
+              <span className="hidden sm:inline">{isThisItemAddingComment ? 'Posting...' : 'Post'}</span>
             </button>
           </form>
         </div>

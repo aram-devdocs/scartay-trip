@@ -8,7 +8,26 @@ import CommentThread from '@/components/shared/CommentThread'
 import LinkName from '@/components/shared/LinkName'
 import FilterBar, { FilterValues } from '@/components/shared/FilterBar'
 import { isPriceInRange, getPriceRange } from '@/utils/priceUtils'
-import { MapPinIcon, BuildingIcon, ClockIcon, XCircleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon } from '@/components/icons/Icons'
+import { MapPinIcon, BuildingIcon, ClockIcon, XCircleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon, LoaderIcon } from '@/components/icons/Icons'
+
+interface VotingState {
+  isVoting: boolean
+  votingItemId?: string
+  votingType?: 'upvote' | 'downvote'
+}
+
+interface CommentingState {
+  isAddingComment: boolean
+  addingCommentItemId?: string
+}
+
+interface MutationState {
+  isAdding: boolean
+  isUpdating: boolean
+  updatingId?: string
+  isDeleting: boolean
+  deletingId?: string
+}
 
 interface ActivitiesSectionProps {
   activities: Activity[]
@@ -18,6 +37,9 @@ interface ActivitiesSectionProps {
   onAdd: (data: Partial<Activity>) => void
   onUpdate: (data: Partial<Activity> & { id: string }) => void
   onDelete: (id: string) => void
+  votingState: VotingState
+  commentingState: CommentingState
+  mutationState: MutationState
 }
 
 const emptyActivity = { name: '', url: '', address: '', neighborhood: '', hours: '', daysClosed: '', price: '' }
@@ -30,6 +52,9 @@ export default function ActivitiesSection({
   onAdd,
   onUpdate,
   onDelete,
+  votingState,
+  commentingState,
+  mutationState,
 }: ActivitiesSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Activity>>({})
@@ -209,9 +234,13 @@ export default function ActivitiesSection({
               className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
           </div>
-          <button type="submit" className="btn btn-primary mt-4">
-            <PlusIcon size={16} />
-            Add Activity
+          <button 
+            type="submit" 
+            className="btn btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={mutationState.isAdding}
+          >
+            {mutationState.isAdding ? <LoaderIcon size={16} /> : <PlusIcon size={16} />}
+            {mutationState.isAdding ? 'Adding...' : 'Add Activity'}
           </button>
         </form>
       )}
@@ -280,15 +309,17 @@ export default function ActivitiesSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === activity.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
-                      <CheckIcon size={14} />
-                      Save
+                      {mutationState.isUpdating && mutationState.updatingId === activity.id ? <LoaderIcon size={14} /> : <CheckIcon size={14} />}
+                      {mutationState.isUpdating && mutationState.updatingId === activity.id ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === activity.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -296,11 +327,12 @@ export default function ActivitiesSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(activity.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isDeleting && mutationState.deletingId === activity.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
-                      <TrashIcon size={14} />
-                      Delete
+                      {mutationState.isDeleting && mutationState.deletingId === activity.id ? <LoaderIcon size={14} /> : <TrashIcon size={14} />}
+                      {mutationState.isDeleting && mutationState.deletingId === activity.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -364,6 +396,9 @@ export default function ActivitiesSection({
                     itemId={activity.id}
                     currentUsername={currentUsername}
                     onVote={onVote}
+                    isVoting={votingState.isVoting}
+                    votingItemId={votingState.votingItemId}
+                    votingType={votingState.votingType}
                   />
 
                   <CommentThread
@@ -372,6 +407,8 @@ export default function ActivitiesSection({
                     itemId={activity.id}
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
+                    isAddingComment={commentingState.isAddingComment}
+                    addingCommentItemId={commentingState.addingCommentItemId}
                   />
                 </>
               )}

@@ -6,7 +6,26 @@ import Card from '@/components/shared/Card'
 import VoteButtons, { getVoteScore } from '@/components/shared/VoteButtons'
 import CommentThread from '@/components/shared/CommentThread'
 import LinkName from '@/components/shared/LinkName'
-import { MapPinIcon, AlertTriangleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon } from '@/components/icons/Icons'
+import { MapPinIcon, AlertTriangleIcon, PencilIcon, PlusIcon, CheckIcon, XIcon, TrashIcon, LoaderIcon } from '@/components/icons/Icons'
+
+interface VotingState {
+  isVoting: boolean
+  votingItemId?: string
+  votingType?: 'upvote' | 'downvote'
+}
+
+interface CommentingState {
+  isAddingComment: boolean
+  addingCommentItemId?: string
+}
+
+interface MutationState {
+  isAdding: boolean
+  isUpdating: boolean
+  updatingId?: string
+  isDeleting: boolean
+  deletingId?: string
+}
 
 interface HotelsSectionProps {
   hotels: Hotel[]
@@ -16,6 +35,9 @@ interface HotelsSectionProps {
   onAdd: (data: Partial<Hotel>) => void
   onUpdate: (data: Partial<Hotel> & { id: string }) => void
   onDelete: (id: string) => void
+  votingState: VotingState
+  commentingState: CommentingState
+  mutationState: MutationState
 }
 
 const emptyHotel = {
@@ -40,6 +62,9 @@ export default function HotelsSection({
   onAdd,
   onUpdate,
   onDelete,
+  votingState,
+  commentingState,
+  mutationState,
 }: HotelsSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Hotel>>({})
@@ -213,9 +238,13 @@ export default function HotelsSection({
               rows={2}
             />
           </div>
-          <button type="submit" className="btn btn-primary mt-4">
-            <PlusIcon size={16} />
-            Add Hotel
+          <button 
+            type="submit" 
+            className="btn btn-primary mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={mutationState.isAdding}
+          >
+            {mutationState.isAdding ? <LoaderIcon size={16} /> : <PlusIcon size={16} />}
+            {mutationState.isAdding ? 'Adding...' : 'Add Hotel'}
           </button>
         </form>
       )}
@@ -324,15 +353,17 @@ export default function HotelsSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === hotel.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
-                      <CheckIcon size={14} />
-                      Save
+                      {mutationState.isUpdating && mutationState.updatingId === hotel.id ? <LoaderIcon size={14} /> : <CheckIcon size={14} />}
+                      {mutationState.isUpdating && mutationState.updatingId === hotel.id ? 'Saving...' : 'Save'}
                     </button>
                     <button
                       onClick={handleCancel}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isUpdating && mutationState.updatingId === hotel.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}
                     >
                       <XIcon size={14} />
@@ -340,11 +371,12 @@ export default function HotelsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(hotel.id)}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px]"
+                      disabled={mutationState.isDeleting && mutationState.deletingId === hotel.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
-                      <TrashIcon size={14} />
-                      Delete
+                      {mutationState.isDeleting && mutationState.deletingId === hotel.id ? <LoaderIcon size={14} /> : <TrashIcon size={14} />}
+                      {mutationState.isDeleting && mutationState.deletingId === hotel.id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -433,6 +465,9 @@ export default function HotelsSection({
                     itemId={hotel.id}
                     currentUsername={currentUsername}
                     onVote={onVote}
+                    isVoting={votingState.isVoting}
+                    votingItemId={votingState.votingItemId}
+                    votingType={votingState.votingType}
                   />
 
                   <CommentThread
@@ -441,6 +476,8 @@ export default function HotelsSection({
                     itemId={hotel.id}
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
+                    isAddingComment={commentingState.isAddingComment}
+                    addingCommentItemId={commentingState.addingCommentItemId}
                   />
                 </>
               )}

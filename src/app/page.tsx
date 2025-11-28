@@ -71,6 +71,41 @@ export default function Home() {
   const deleteActivityMutation = useDeleteMutation('activity')
   const deleteRestaurantMutation = useDeleteMutation('restaurant')
 
+  // Mutation loading states for UI feedback
+  const votingState = {
+    isVoting: voteMutation.isPending,
+    votingItemId: voteMutation.variables?.itemId,
+    votingType: voteMutation.variables?.voteType,
+  }
+
+  const commentingState = {
+    isAddingComment: commentMutation.isPending,
+    addingCommentItemId: commentMutation.variables?.itemId,
+  }
+
+  const getMutationState = (itemType: CrudItemType) => {
+    const addMutation = itemType === 'flight' ? addFlightMutation 
+      : itemType === 'hotel' ? addHotelMutation 
+      : itemType === 'activity' ? addActivityMutation 
+      : addRestaurantMutation
+    const updateMutation = itemType === 'flight' ? updateFlightMutation 
+      : itemType === 'hotel' ? updateHotelMutation 
+      : itemType === 'activity' ? updateActivityMutation 
+      : updateRestaurantMutation
+    const deleteMutation = itemType === 'flight' ? deleteFlightMutation 
+      : itemType === 'hotel' ? deleteHotelMutation 
+      : itemType === 'activity' ? deleteActivityMutation 
+      : deleteRestaurantMutation
+    
+    return {
+      isAdding: addMutation.isPending,
+      isUpdating: updateMutation.isPending,
+      updatingId: (updateMutation.variables as { id?: string } | undefined)?.id,
+      isDeleting: deleteMutation.isPending,
+      deletingId: deleteMutation.variables as string | undefined,
+    }
+  }
+
   const handleVote = (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => {
     if (!user) return
     voteMutation.mutate({ username: user.name, itemType, itemId, voteType })
@@ -168,6 +203,9 @@ export default function Home() {
               onAdd={(data) => handleAdd('flight', data)}
               onUpdate={(data) => handleUpdate('flight', data)}
               onDelete={(id) => handleDelete('flight', id)}
+              votingState={votingState}
+              commentingState={commentingState}
+              mutationState={getMutationState('flight')}
             />
           )}
           {!dataLoading && activeTab === 'hotels' && (
@@ -179,6 +217,9 @@ export default function Home() {
               onAdd={(data) => handleAdd('hotel', data)}
               onUpdate={(data) => handleUpdate('hotel', data)}
               onDelete={(id) => handleDelete('hotel', id)}
+              votingState={votingState}
+              commentingState={commentingState}
+              mutationState={getMutationState('hotel')}
             />
           )}
           {!dataLoading && activeTab === 'activities' && (
@@ -190,6 +231,9 @@ export default function Home() {
               onAdd={(data) => handleAdd('activity', data)}
               onUpdate={(data) => handleUpdate('activity', data)}
               onDelete={(id) => handleDelete('activity', id)}
+              votingState={votingState}
+              commentingState={commentingState}
+              mutationState={getMutationState('activity')}
             />
           )}
           {!dataLoading && activeTab === 'food' && (
@@ -201,6 +245,9 @@ export default function Home() {
               onAdd={(data) => handleAdd('restaurant', data)}
               onUpdate={(data) => handleUpdate('restaurant', data)}
               onDelete={(id) => handleDelete('restaurant', id)}
+              votingState={votingState}
+              commentingState={commentingState}
+              mutationState={getMutationState('restaurant')}
             />
           )}
         </main>
