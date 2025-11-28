@@ -55,3 +55,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 })
   }
 }
+
+// Delete a comment
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const username = searchParams.get('username')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing comment id' }, { status: 400 })
+    }
+
+    if (!username) {
+      return NextResponse.json({ error: 'Missing username' }, { status: 400 })
+    }
+
+    // First, verify the comment exists and belongs to the user
+    const comment = await prisma.comment.findUnique({
+      where: { id },
+    })
+
+    if (!comment) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
+    }
+
+    if (comment.username !== username) {
+      return NextResponse.json({ error: 'You can only delete your own comments' }, { status: 403 })
+    }
+
+    // Delete the comment
+    await prisma.comment.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true, itemType: comment.itemType })
+  } catch (error) {
+    console.error('Error deleting comment:', error)
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 })
+  }
+}
