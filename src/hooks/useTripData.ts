@@ -73,13 +73,24 @@ export function useTripData() {
   const activities = useActivities()
   const restaurants = useRestaurants()
 
+  const refetchAll = async () => {
+    await Promise.all([
+      flights.refetch(),
+      hotels.refetch(),
+      activities.refetch(),
+      restaurants.refetch(),
+    ])
+  }
+
   return {
     flights: flights.data ?? [],
     hotels: hotels.data ?? [],
     activities: activities.data ?? [],
     restaurants: restaurants.data ?? [],
     isLoading: flights.isLoading || hotels.isLoading || activities.isLoading || restaurants.isLoading,
+    isRefetching: flights.isRefetching || hotels.isRefetching || activities.isRefetching || restaurants.isRefetching,
     error: flights.error || hotels.error || activities.error || restaurants.error,
+    refetchAll,
   }
 }
 
