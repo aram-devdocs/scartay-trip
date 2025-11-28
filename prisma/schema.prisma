@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  pin       String
+  createdAt DateTime @default(now())
+}
+
+model Flight {
+  id             String    @id @default(cuid())
+  travelerName   String
+  price3Night    Float?
+  price4Night    Float?
+  inboundFlight  String?
+  outboundFlight String?
+  airline        String?
+  notes          String?
+  votes          Vote[]
+  comments       Comment[]
+}
+
+model Hotel {
+  id              String    @id @default(cuid())
+  name            String
+  url             String?
+  totalPrice      Float
+  perPerson       Float
+  includes        String?
+  neighborhood    String?
+  notes           String?
+  price3NightTay  Float?
+  price3NightScar Float?
+  price4NightTay  Float?
+  price4NightScar Float?
+  votes           Vote[]
+  comments        Comment[]
+}
+
+model Activity {
+  id           String    @id @default(cuid())
+  name         String
+  url          String?
+  address      String?
+  neighborhood String?
+  hours        String?
+  daysClosed   String?
+  price        String?
+  votes        Vote[]
+  comments     Comment[]
+}
+
+model Restaurant {
+  id           String    @id @default(cuid())
+  name         String
+  url          String?
+  address      String?
+  neighborhood String?
+  foodOrDrink  String?
+  veganOrOmni  String?
+  hours        String?
+  daysClosed   String?
+  priceRange   String?
+  votes        Vote[]
+  comments     Comment[]
+}
+
+model Vote {
+  id           String      @id @default(cuid())
+  username     String
+  voteType     String
+  itemType     String
+  itemId       String
+  flightId     String?
+  flight       Flight?     @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  hotelId      String?
+  hotel        Hotel?      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  activityId   String?
+  activity     Activity?   @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+
+  @@unique([username, itemType, itemId])
+}
+
+model Comment {
+  id           String      @id @default(cuid())
+  username     String
+  content      String
+  itemType     String
+  itemId       String
+  flightId     String?
+  flight       Flight?     @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  hotelId      String?
+  hotel        Hotel?      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  activityId   String?
+  activity     Activity?   @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+}
+
+model OnlineUser {
+  id        String   @id @default(cuid())
+  username  String
+  sessionId String   @unique
+  lastSeen  DateTime @default(now())
+}
