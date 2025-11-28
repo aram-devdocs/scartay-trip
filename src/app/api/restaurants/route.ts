@@ -21,14 +21,15 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const data = await request.json()
-    const { name, url, address, neighborhood, foodOrDrink, veganOrOmni, hours, daysClosed, priceRange } = data
+    const { name, url, address, neighborhood, hasCocktails, cuisineType, veganOrOmni, hours, daysClosed, priceRange } = data
     const restaurant = await prisma.restaurant.create({
       data: {
         name,
         url: url || '',
         address: address || '',
         neighborhood: neighborhood || '',
-        foodOrDrink: foodOrDrink || 'Both',
+        hasCocktails: hasCocktails ?? false,
+        cuisineType: cuisineType || null,
         veganOrOmni: veganOrOmni || 'Both',
         hours: hours || '',
         daysClosed: daysClosed || '',
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const data = await request.json()
-    const { id, name, url, address, neighborhood, foodOrDrink, veganOrOmni, hours, daysClosed, priceRange } = data
+    const { id, name, url, address, neighborhood, hasCocktails, cuisineType, veganOrOmni, hours, daysClosed, priceRange } = data
     const restaurant = await prisma.restaurant.update({
       where: { id },
       data: {
@@ -57,7 +58,8 @@ export async function PUT(request: Request) {
         url,
         address,
         neighborhood,
-        foodOrDrink,
+        hasCocktails,
+        cuisineType,
         veganOrOmni,
         hours,
         daysClosed,

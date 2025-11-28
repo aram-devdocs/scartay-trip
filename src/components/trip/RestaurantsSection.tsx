@@ -18,12 +18,36 @@ interface RestaurantsSectionProps {
   onDelete: (id: string) => void
 }
 
+const CUISINE_OPTIONS = [
+  'American',
+  'Bagels',
+  'Bar/Lounge',
+  'Breakfast/Brunch',
+  'Chinese',
+  'Coffee/Cafe',
+  'Dessert',
+  'French',
+  'Indian',
+  'Italian',
+  'Japanese',
+  'Korean',
+  'Mediterranean',
+  'Mexican',
+  'Pizza',
+  'Seafood',
+  'Thai',
+  'Vegan',
+  'Vietnamese',
+  'Other',
+]
+
 const emptyRestaurant = {
   name: '',
   url: '',
   address: '',
   neighborhood: '',
-  foodOrDrink: 'Both',
+  hasCocktails: false,
+  cuisineType: '',
   veganOrOmni: 'Both',
   hours: '',
   daysClosed: '',
@@ -156,14 +180,24 @@ export default function RestaurantsSection({
               className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             />
             <select
-              value={newRestaurant.foodOrDrink}
-              onChange={(e) => setNewRestaurant({ ...newRestaurant, foodOrDrink: e.target.value })}
+              value={newRestaurant.cuisineType}
+              onChange={(e) => setNewRestaurant({ ...newRestaurant, cuisineType: e.target.value })}
               className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
             >
-              <option value="Food">Food</option>
-              <option value="Drink">Drink</option>
-              <option value="Both">Both</option>
+              <option value="">Select Cuisine Type</option>
+              {CUISINE_OPTIONS.map((cuisine) => (
+                <option key={cuisine} value={cuisine}>{cuisine}</option>
+              ))}
             </select>
+            <label className="flex items-center gap-3 px-3 py-2 border rounded-lg min-h-[44px] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newRestaurant.hasCocktails}
+                onChange={(e) => setNewRestaurant({ ...newRestaurant, hasCocktails: e.target.checked })}
+                className="w-5 h-5 accent-pink-500"
+              />
+              <span style={{ color: 'var(--text-secondary)' }}>Has Cocktails</span>
+            </label>
             <select
               value={newRestaurant.veganOrOmni}
               onChange={(e) => setNewRestaurant({ ...newRestaurant, veganOrOmni: e.target.value })}
@@ -171,7 +205,7 @@ export default function RestaurantsSection({
             >
               <option value="Vegan">Vegan</option>
               <option value="Omni">Omni</option>
-              <option value="Both">Both</option>
+              <option value="Both">Vegan Options Available</option>
             </select>
             <input
               type="text"
@@ -218,67 +252,77 @@ export default function RestaurantsSection({
                       placeholder="Name *"
                       value={editingData.name || ''}
                       onChange={(e) => setEditingData({ ...editingData, name: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <input
                       type="url"
                       placeholder="Website URL"
                       value={editingData.url || ''}
                       onChange={(e) => setEditingData({ ...editingData, url: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <input
                       type="text"
                       placeholder="Address"
                       value={editingData.address || ''}
                       onChange={(e) => setEditingData({ ...editingData, address: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <input
                       type="text"
                       placeholder="Neighborhood"
                       value={editingData.neighborhood || ''}
                       onChange={(e) => setEditingData({ ...editingData, neighborhood: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <select
-                      value={editingData.foodOrDrink || 'Both'}
-                      onChange={(e) => setEditingData({ ...editingData, foodOrDrink: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      value={editingData.cuisineType || ''}
+                      onChange={(e) => setEditingData({ ...editingData, cuisineType: e.target.value })}
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     >
-                      <option value="Food">Food</option>
-                      <option value="Drink">Drink</option>
-                      <option value="Both">Both</option>
+                      <option value="">Select Cuisine Type</option>
+                      {CUISINE_OPTIONS.map((cuisine) => (
+                        <option key={cuisine} value={cuisine}>{cuisine}</option>
+                      ))}
                     </select>
+                    <label className="flex items-center gap-3 px-3 py-2 border rounded-lg min-h-[44px] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editingData.hasCocktails || false}
+                        onChange={(e) => setEditingData({ ...editingData, hasCocktails: e.target.checked })}
+                        className="w-5 h-5 accent-pink-500"
+                      />
+                      <span style={{ color: 'var(--text-secondary)' }}>Has Cocktails</span>
+                    </label>
                     <select
                       value={editingData.veganOrOmni || 'Both'}
                       onChange={(e) => setEditingData({ ...editingData, veganOrOmni: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     >
                       <option value="Vegan">Vegan</option>
                       <option value="Omni">Omni</option>
-                      <option value="Both">Both</option>
+                      <option value="Both">Vegan Options Available</option>
                     </select>
                     <input
                       type="text"
                       placeholder="Hours"
                       value={editingData.hours || ''}
                       onChange={(e) => setEditingData({ ...editingData, hours: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <input
                       type="text"
                       placeholder="Days Closed"
                       value={editingData.daysClosed || ''}
                       onChange={(e) => setEditingData({ ...editingData, daysClosed: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                     <input
                       type="text"
                       placeholder="Price Range"
                       value={editingData.priceRange || ''}
                       onChange={(e) => setEditingData({ ...editingData, priceRange: e.target.value })}
-                      className="px-3 py-2 border rounded focus:outline-none focus:border-pink-400"
+                      className="px-3 py-2 border rounded-lg focus:outline-none focus:border-pink-400 min-h-[44px]"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -325,12 +369,22 @@ export default function RestaurantsSection({
                       </button>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      <span
-                        className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{ background: 'var(--gradient-primary)', color: 'white' }}
-                      >
-                        {restaurant.foodOrDrink}
-                      </span>
+                      {restaurant.cuisineType && (
+                        <span
+                          className="text-xs px-2.5 py-1 rounded-full font-medium"
+                          style={{ background: 'var(--gradient-primary)', color: 'white' }}
+                        >
+                          {restaurant.cuisineType}
+                        </span>
+                      )}
+                      {restaurant.hasCocktails && (
+                        <span
+                          className="text-xs px-2.5 py-1 rounded-full font-medium"
+                          style={{ background: 'var(--gradient-secondary)', color: 'white' }}
+                        >
+                          Cocktails
+                        </span>
+                      )}
                       <span
                         className="text-xs px-2.5 py-1 rounded-full font-medium"
                         style={{ background: 'var(--border-light)', color: 'var(--text-secondary)' }}

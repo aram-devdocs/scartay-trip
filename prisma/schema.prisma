@@ -64,7 +64,8 @@ model Restaurant {
   url          String?
   address      String?
   neighborhood String?
-  foodOrDrink  String?
+  hasCocktails Boolean   @default(false)
+  cuisineType  String?
   veganOrOmni  String?
   hours        String?
   daysClosed   String?

@@ -47,7 +47,8 @@ export interface Restaurant {
   url: string | null
   address: string | null
   neighborhood: string | null
-  foodOrDrink: string | null
+  hasCocktails: boolean
+  cuisineType: string | null
   veganOrOmni: string | null
   hours: string | null
   daysClosed: string | null

@@ -314,7 +314,7 @@ export default function FlightsSection({
                       style={{ background: 'var(--border-light)' }}
                     >
                       <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                        3 nights
+                        3 nights (flight + hotel)
                       </div>
                       <div
                         className="text-lg sm:text-xl font-bold"
@@ -328,7 +328,7 @@ export default function FlightsSection({
                       style={{ background: 'var(--border-light)' }}
                     >
                       <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                        4 nights
+                        4 nights (flight + hotel)
                       </div>
                       <div
                         className="text-lg sm:text-xl font-bold"
