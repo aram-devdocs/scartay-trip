@@ -25,7 +25,10 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@tanstack/query-sync-storage-persister": "^5.90.13",
     "@tanstack/react-query": "^5.90.11",
+    "@tanstack/react-query-persist-client": "^5.90.13",
+    "idb-keyval": "^6.2.2",
     "next": "16.0.5",
     "prisma": "^6.19.0",
     "react": "19.2.0",

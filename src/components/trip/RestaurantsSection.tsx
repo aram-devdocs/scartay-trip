@@ -46,6 +46,7 @@ interface RestaurantsSectionProps {
   votingState: VotingState
   commentingState: CommentingState
   mutationState: MutationState
+  isOffline?: boolean
 }
 
 const CUISINE_OPTIONS = [
@@ -97,6 +98,7 @@ export default function RestaurantsSection({
   votingState,
   commentingState,
   mutationState,
+  isOffline = false,
 }: RestaurantsSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Restaurant>>({})
@@ -159,11 +161,13 @@ export default function RestaurantsSection({
   }, [restaurants, filters])
 
   const handleEdit = (restaurant: Restaurant) => {
+    if (isOffline) return
     setEditingId(restaurant.id)
     setEditingData(restaurant)
   }
 
   const handleSave = () => {
+    if (isOffline) return
     if (editingId && editingData.name) {
       onUpdate({ ...editingData, id: editingId } as Restaurant & { id: string })
       setEditingId(null)
@@ -177,6 +181,7 @@ export default function RestaurantsSection({
   }
 
   const handleDeleteClick = (id: string) => {
+    if (isOffline) return
     if (confirm('Delete this restaurant?')) {
       onDelete(id)
     }
@@ -184,6 +189,7 @@ export default function RestaurantsSection({
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isOffline) return
     if (newRestaurant.name) {
       onAdd(newRestaurant)
       setNewRestaurant(emptyRestaurant)
@@ -204,7 +210,9 @@ export default function RestaurantsSection({
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
+          disabled={isOffline}
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isOffline ? 'Adding unavailable offline' : undefined}
         >
           {showAddForm ? (
             <>
@@ -229,7 +237,7 @@ export default function RestaurantsSection({
         showCuisine={true}
       />
 
-      {showAddForm && (
+      {showAddForm && !isOffline && (
         <form
           onSubmit={handleAddSubmit}
           className="p-5 rounded-2xl"
@@ -423,7 +431,7 @@ export default function RestaurantsSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      disabled={mutationState.isUpdating && mutationState.updatingId === restaurant.id}
+                      disabled={(mutationState.isUpdating && mutationState.updatingId === restaurant.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
@@ -441,7 +449,7 @@ export default function RestaurantsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(restaurant.id)}
-                      disabled={mutationState.isDeleting && mutationState.deletingId === restaurant.id}
+                      disabled={(mutationState.isDeleting && mutationState.deletingId === restaurant.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
@@ -457,14 +465,16 @@ export default function RestaurantsSection({
                       <h3 className="text-lg font-bold flex-1 min-w-0" style={{ color: 'var(--primary)' }}>
                         <LinkName name={restaurant.name} url={restaurant.url} />
                       </h3>
-                      <button
-                        onClick={() => handleEdit(restaurant)}
-                        className="p-2 rounded-full transition-all hover:scale-110 flex-shrink-0"
-                        style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
-                        title="Edit"
-                      >
-                        <PencilIcon size={14} />
-                      </button>
+                      {!isOffline && (
+                        <button
+                          onClick={() => handleEdit(restaurant)}
+                          className="p-2 rounded-full transition-all hover:scale-110 flex-shrink-0"
+                          style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
+                          title="Edit"
+                        >
+                          <PencilIcon size={14} />
+                        </button>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2">
                       {restaurant.cuisineType && (
@@ -534,6 +544,7 @@ export default function RestaurantsSection({
                     isVoting={votingState.isVoting}
                     votingItemId={votingState.votingItemId}
                     votingType={votingState.votingType}
+                    isOffline={isOffline}
                   />
 
                   <CommentThread
@@ -550,6 +561,7 @@ export default function RestaurantsSection({
                     deletingCommentId={commentingState.deletingCommentId}
                     isEditingComment={commentingState.isEditingComment}
                     editingCommentId={commentingState.editingCommentId}
+                    isOffline={isOffline}
                   />
                 </>
               )}

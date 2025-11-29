@@ -19,6 +19,7 @@ interface CommentThreadProps {
   deletingCommentId?: string
   isEditingComment?: boolean
   editingCommentId?: string
+  isOffline?: boolean
 }
 
 export default function CommentThread({
@@ -35,6 +36,7 @@ export default function CommentThread({
   deletingCommentId,
   isEditingComment = false,
   editingCommentId,
+  isOffline = false,
 }: CommentThreadProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [newComment, setNewComment] = useState('')
@@ -43,6 +45,7 @@ export default function CommentThread({
   const editInputRef = useRef<HTMLInputElement>(null)
 
   const isThisItemAddingComment = isAddingComment && addingCommentItemId === itemId
+  const isInputDisabled = isThisItemAddingComment || isOffline
 
   // Focus edit input when entering edit mode
   useEffect(() => {
@@ -54,19 +57,21 @@ export default function CommentThread({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newComment.trim() && !isThisItemAddingComment) {
+    if (newComment.trim() && !isInputDisabled) {
       onAddComment(itemType, itemId, newComment.trim())
       setNewComment('')
     }
   }
 
   const handleDelete = (commentId: string) => {
+    if (isOffline) return
     if (confirm('Delete this comment?')) {
       onDeleteComment(commentId, itemType)
     }
   }
 
   const handleStartEdit = (comment: Comment) => {
+    if (isOffline) return
     setEditingId(comment.id)
     setEditContent(comment.content)
   }
@@ -77,7 +82,7 @@ export default function CommentThread({
   }
 
   const handleSaveEdit = (commentId: string) => {
-    if (editContent.trim() && editContent.trim() !== '') {
+    if (editContent.trim() && editContent.trim() !== '' && !isOffline) {
       onEditComment(commentId, itemType, editContent.trim())
       setEditingId(null)
       setEditContent('')
@@ -165,12 +170,12 @@ export default function CommentThread({
                     onKeyDown={(e) => handleEditKeyDown(e, comment.id)}
                     className="comment-edit-input"
                     placeholder="Edit your comment..."
-                    disabled={isEditing}
+                    disabled={isEditing || isOffline}
                   />
                   <div className="comment-edit-actions">
                     <button
                       onClick={() => handleSaveEdit(comment.id)}
-                      disabled={!editContent.trim() || isEditing}
+                      disabled={!editContent.trim() || isEditing || isOffline}
                       className="comment-edit-btn comment-edit-btn-save"
                     >
                       {isEditing ? <LoaderIcon size={14} /> : <CheckIcon size={14} />}
@@ -198,13 +203,13 @@ export default function CommentThread({
                     type: 'edit',
                     onAction: () => handleStartEdit(comment),
                     isLoading: false,
-                    disabled: isDeleting,
+                    disabled: isDeleting || isOffline,
                   },
                   {
                     type: 'delete',
                     onAction: () => handleDelete(comment.id),
                     isLoading: isDeleting,
-                    disabled: false,
+                    disabled: isOffline,
                   },
                 ]}
                 className="comment-swipeable"
@@ -219,39 +224,43 @@ export default function CommentThread({
                     </span>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(comment.createdAt)}</span>
-                      {/* Desktop hover action buttons */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleStartEdit(comment)
-                        }}
-                        disabled={isDeleting}
-                        className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        style={{ 
-                          background: 'var(--secondary)',
-                          color: 'white',
-                        }}
-                        title="Edit comment"
-                        aria-label="Edit comment"
-                      >
-                        <PencilIcon size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(comment.id)
-                        }}
-                        disabled={isDeleting}
-                        className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        style={{ 
-                          background: 'var(--accent)',
-                          color: 'white',
-                        }}
-                        title="Delete comment"
-                        aria-label="Delete comment"
-                      >
-                        {isDeleting ? <LoaderIcon size={12} /> : <TrashIcon size={12} />}
-                      </button>
+                      {/* Desktop hover action buttons - hidden when offline */}
+                      {!isOffline && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleStartEdit(comment)
+                            }}
+                            disabled={isDeleting}
+                            className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            style={{ 
+                              background: 'var(--secondary)',
+                              color: 'white',
+                            }}
+                            title="Edit comment"
+                            aria-label="Edit comment"
+                          >
+                            <PencilIcon size={12} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(comment.id)
+                            }}
+                            disabled={isDeleting}
+                            className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                            style={{ 
+                              background: 'var(--accent)',
+                              color: 'white',
+                            }}
+                            title="Delete comment"
+                            aria-label="Delete comment"
+                          >
+                            {isDeleting ? <LoaderIcon size={12} /> : <TrashIcon size={12} />}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                   <p style={{ color: 'var(--text-secondary)' }}>{comment.content}</p>
@@ -265,20 +274,22 @@ export default function CommentThread({
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder={`Comment as ${currentUsername}...`}
+              placeholder={isOffline ? 'Commenting unavailable offline' : `Comment as ${currentUsername}...`}
               className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none min-h-[44px]"
               style={{
                 borderColor: 'var(--border)',
                 background: 'var(--input-bg)',
                 color: 'var(--text)',
+                opacity: isOffline ? 0.6 : 1,
               }}
-              disabled={isThisItemAddingComment}
+              disabled={isInputDisabled}
             />
             <button
               type="submit"
-              disabled={!newComment.trim() || isThisItemAddingComment}
+              disabled={!newComment.trim() || isInputDisabled}
               className="px-4 py-2 rounded-lg text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center gap-1.5 transition-all hover:scale-105 active:scale-95 disabled:hover:scale-100"
               style={{ background: 'var(--gradient-primary)' }}
+              title={isOffline ? 'Commenting unavailable offline' : 'Post comment'}
             >
               {isThisItemAddingComment ? <LoaderIcon size={16} /> : <SendIcon size={16} />}
               <span className="hidden sm:inline">{isThisItemAddingComment ? 'Posting...' : 'Post'}</span>

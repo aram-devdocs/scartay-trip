@@ -7,9 +7,10 @@ import { CalendarIcon, MapPinIcon, HeartIcon } from '@/components/icons/Icons'
 interface HeaderProps {
   onlineUsers: OnlineUser[]
   currentUsername: string
+  isOffline?: boolean
 }
 
-export default function Header({ onlineUsers, currentUsername }: HeaderProps) {
+export default function Header({ onlineUsers, currentUsername, isOffline = false }: HeaderProps) {
   return (
     <header
       className="sticky top-0 z-40 glass"
@@ -17,6 +18,8 @@ export default function Header({ onlineUsers, currentUsername }: HeaderProps) {
         background: 'rgba(13, 13, 18, 0.9)',
         borderBottom: '1px solid var(--border)',
         backdropFilter: 'blur(12px)',
+        // Add top padding when offline banner is shown
+        marginTop: isOffline ? '44px' : 0,
       }}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">

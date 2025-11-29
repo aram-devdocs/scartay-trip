@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useUser } from '@/hooks/useUser'
 import { usePresence } from '@/hooks/usePresence'
+import { useOffline } from '@/hooks/useOffline'
 import {
   useTripData,
   useVoteMutation,
@@ -20,6 +21,7 @@ import Header from '@/components/layout/Header'
 import Navigation from '@/components/layout/Navigation'
 import LoginModal from '@/components/shared/LoginModal'
 import PullToRefresh from '@/components/shared/PullToRefresh'
+import OfflineBanner from '@/components/shared/OfflineBanner'
 import FlightsSection from '@/components/trip/FlightsSection'
 import HotelsSection from '@/components/trip/HotelsSection'
 import ActivitiesSection from '@/components/trip/ActivitiesSection'
@@ -43,6 +45,7 @@ function getItemLabel(itemType: CrudItemType) {
 export default function Home() {
   const { user, isLoading: userLoading, login } = useUser()
   const { onlineUsers } = usePresence(user?.name || null, user?.id || null)
+  const { isOffline } = useOffline()
 
   const [activeTab, setActiveTab] = useState('flights')
 
@@ -50,6 +53,10 @@ export default function Home() {
   const { flights, hotels, activities, restaurants, isLoading: dataLoading, refetchAll } = useTripData()
 
   const handleRefresh = async () => {
+    if (isOffline) {
+      toast.error('Cannot refresh while offline')
+      return
+    }
     await refetchAll()
     toast.success('Refreshed!')
   }
@@ -130,7 +137,7 @@ export default function Home() {
       { commentId, username: user.name, itemType },
       {
         onSuccess: () => toast.success('Comment deleted!'),
-        onError: (error) => toast.error(error.message || 'Failed to delete comment'),
+        onError: (error) => toast.error((error as Error).message || 'Failed to delete comment'),
       }
     )
   }
@@ -141,7 +148,7 @@ export default function Home() {
       { commentId, username: user.name, content, itemType },
       {
         onSuccess: () => toast.success('Comment updated!'),
-        onError: (error) => toast.error(error.message || 'Failed to edit comment'),
+        onError: (error) => toast.error((error as Error).message || 'Failed to edit comment'),
       }
     )
   }
@@ -214,7 +221,8 @@ export default function Home() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen" style={{ background: 'var(--background)' }}>
-        <Header onlineUsers={onlineUsers} currentUsername={user.name} />
+        <OfflineBanner />
+        <Header onlineUsers={onlineUsers} currentUsername={user.name} isOffline={isOffline} />
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         <main className="max-w-7xl mx-auto px-4 py-6">
@@ -238,6 +246,7 @@ export default function Home() {
               votingState={votingState}
               commentingState={commentingState}
               mutationState={getMutationState('flight')}
+              isOffline={isOffline}
             />
           )}
           {!dataLoading && activeTab === 'hotels' && (
@@ -254,6 +263,7 @@ export default function Home() {
               votingState={votingState}
               commentingState={commentingState}
               mutationState={getMutationState('hotel')}
+              isOffline={isOffline}
             />
           )}
           {!dataLoading && activeTab === 'activities' && (
@@ -270,6 +280,7 @@ export default function Home() {
               votingState={votingState}
               commentingState={commentingState}
               mutationState={getMutationState('activity')}
+              isOffline={isOffline}
             />
           )}
           {!dataLoading && activeTab === 'food' && (
@@ -286,6 +297,7 @@ export default function Home() {
               votingState={votingState}
               commentingState={commentingState}
               mutationState={getMutationState('restaurant')}
+              isOffline={isOffline}
             />
           )}
         </main>
