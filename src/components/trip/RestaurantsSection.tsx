@@ -504,10 +504,15 @@ export default function RestaurantsSection({
 
                   <div className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     {restaurant.address && (
-                      <p className="flex items-center gap-2">
+                      <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 hover:text-primary transition-colors"
+                      >
                         <MapPinIcon size={14} className="text-primary flex-shrink-0" />
-                        <span>{restaurant.address}</span>
-                      </p>
+                        <span className="underline underline-offset-2">{restaurant.address}</span>
+                      </a>
                     )}
                     {restaurant.neighborhood && (
                       <p className="flex items-center gap-2">
