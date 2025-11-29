@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 
 const VERSION_STORAGE_KEY = 'app_build_version'
 const RELOAD_TIMESTAMP_KEY = 'app_last_reload_timestamp'
@@ -46,24 +47,24 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
   const isCheckingRef = useRef(false)
 
   /**
-   * Safely get the stored version from localStorage
+   * Safely get a value from localStorage
    */
-  const getStoredVersion = useCallback((): string | null => {
+  const getStorageItem = useCallback((key: string): string | null => {
     if (typeof window === 'undefined') return null
     try {
-      return localStorage.getItem(VERSION_STORAGE_KEY)
+      return localStorage.getItem(key)
     } catch {
       return null
     }
   }, [])
 
   /**
-   * Safely store the version in localStorage
+   * Safely set a value in localStorage
    */
-  const setStoredVersion = useCallback((version: string): void => {
+  const setStorageItem = useCallback((key: string, value: string): void => {
     if (typeof window === 'undefined') return
     try {
-      localStorage.setItem(VERSION_STORAGE_KEY, version)
+      localStorage.setItem(key, value)
     } catch {
       // Storage might be full or disabled
     }
@@ -73,31 +74,25 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
    * Check if we're in a reload loop (reloaded too recently)
    */
   const isInReloadLoop = useCallback((): boolean => {
-    if (typeof window === 'undefined') return true
-    try {
-      const lastReload = localStorage.getItem(RELOAD_TIMESTAMP_KEY)
-      if (lastReload) {
-        const timeSinceReload = Date.now() - parseInt(lastReload, 10)
-        return timeSinceReload < MIN_RELOAD_INTERVAL
-      }
-    } catch {
-      // If we can't read storage, be safe and don't reload
-      return true
+    const lastReload = getStorageItem(RELOAD_TIMESTAMP_KEY)
+    if (lastReload) {
+      const timeSinceReload = Date.now() - parseInt(lastReload, 10)
+      return timeSinceReload < MIN_RELOAD_INTERVAL
     }
     return false
-  }, [])
+  }, [getStorageItem])
 
   /**
-   * Mark that we're about to reload
+   * Check if we've checked recently (throttle API calls)
    */
-  const markReload = useCallback((): void => {
-    if (typeof window === 'undefined') return
-    try {
-      localStorage.setItem(RELOAD_TIMESTAMP_KEY, Date.now().toString())
-    } catch {
-      // Storage might be full or disabled
+  const hasCheckedRecently = useCallback((): boolean => {
+    const lastCheck = getStorageItem(LAST_CHECK_TIMESTAMP_KEY)
+    if (lastCheck) {
+      const timeSinceCheck = Date.now() - parseInt(lastCheck, 10)
+      return timeSinceCheck < MIN_CHECK_INTERVAL
     }
-  }, [])
+    return false
+  }, [getStorageItem])
 
   /**
    * Fetch the current version from the server
@@ -128,17 +123,15 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
    * Check for version updates and reload if necessary
    * Returns true if a new version was detected
    */
-  const checkForUpdates = useCallback(async (): Promise<boolean> => {
+  const checkForUpdates = useCallback(async (force = false): Promise<boolean> => {
     // Prevent concurrent checks
     if (isCheckingRef.current) return false
     
-    // Throttle checks
-    const now = Date.now()
-    if (now - lastCheckRef.current < 1000) return false
-    lastCheckRef.current = now
-    
     // Don't check if we're in SSR
     if (typeof window === 'undefined') return false
+    
+    // Don't check if we checked recently (unless forced)
+    if (!force && hasCheckedRecently()) return false
     
     // Don't reload if we're in a loop
     if (isInReloadLoop()) return false
@@ -146,28 +139,36 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
     isCheckingRef.current = true
     
     try {
+      // Mark that we're checking now
+      setStorageItem(LAST_CHECK_TIMESTAMP_KEY, Date.now().toString())
+      
       const serverVersion = await fetchServerVersion()
       
       if (!serverVersion) {
         return false
       }
       
-      const storedVersion = getStoredVersion()
+      const storedVersion = getStorageItem(VERSION_STORAGE_KEY)
       
-      // First load - store the version
+      // First load - store the version without reloading
       if (!storedVersion) {
-        setStoredVersion(serverVersion)
+        setStorageItem(VERSION_STORAGE_KEY, serverVersion)
         return false
       }
       
       // Version changed - reload needed
       if (serverVersion !== storedVersion) {
         // Update stored version before reload to prevent loops
-        setStoredVersion(serverVersion)
-        markReload()
+        setStorageItem(VERSION_STORAGE_KEY, serverVersion)
+        setStorageItem(RELOAD_TIMESTAMP_KEY, Date.now().toString())
         
-        // Give a small delay to ensure storage is persisted
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Show toast to inform user
+        toast.info('New version available! Refreshing...', {
+          duration: 2000,
+        })
+        
+        // Give time for toast to show and storage to persist
+        await new Promise(resolve => setTimeout(resolve, 1500))
         
         // Force reload to get new assets
         window.location.reload()
@@ -178,27 +179,21 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
     } finally {
       isCheckingRef.current = false
     }
-  }, [fetchServerVersion, getStoredVersion, setStoredVersion, isInReloadLoop, markReload])
+  }, [fetchServerVersion, getStorageItem, setStorageItem, isInReloadLoop, hasCheckedRecently])
 
-  // Set up periodic checking
+  // Initial check on mount (with delay)
   useEffect(() => {
     if (!enabled) return
 
-    // Initial check after a short delay
+    // Initial check after app settles
     const initialTimeout = setTimeout(() => {
       checkForUpdates()
-    }, 2000)
-
-    // Periodic checks
-    const interval = setInterval(() => {
-      checkForUpdates()
-    }, checkInterval)
+    }, 3000)
 
     return () => {
       clearTimeout(initialTimeout)
-      clearInterval(interval)
     }
-  }, [enabled, checkInterval, checkForUpdates])
+  }, [enabled, checkForUpdates])
 
   // Check on visibility change (when PWA comes to foreground)
   useEffect(() => {
@@ -220,25 +215,7 @@ export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheck
     }
   }, [enabled, checkOnVisibilityChange, checkForUpdates])
 
-  // Check on window focus
-  useEffect(() => {
-    if (!enabled || !checkOnFocus) return
-    if (typeof window === 'undefined') return
-
-    const handleFocus = () => {
-      // Small delay to let the app settle
-      setTimeout(() => {
-        checkForUpdates()
-      }, 500)
-    }
-
-    window.addEventListener('focus', handleFocus)
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [enabled, checkOnFocus, checkForUpdates])
-
   return {
-    checkNow: checkForUpdates,
+    checkNow: () => checkForUpdates(true), // Force check when called manually
   }
 }
