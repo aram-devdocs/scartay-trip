@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Comment, ItemType } from '@/types'
-import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon, LoaderIcon } from '@/components/icons/Icons'
+import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon, LoaderIcon, TrashIcon } from '@/components/icons/Icons'
 
 interface CommentThreadProps {
   comments: Comment[]
@@ -10,8 +10,11 @@ interface CommentThreadProps {
   itemId: string
   currentUsername: string
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
+  onDeleteComment: (commentId: string, itemType: ItemType) => void
   isAddingComment?: boolean
   addingCommentItemId?: string
+  isDeletingComment?: boolean
+  deletingCommentId?: string
 }
 
 export default function CommentThread({
@@ -20,8 +23,11 @@ export default function CommentThread({
   itemId,
   currentUsername,
   onAddComment,
+  onDeleteComment,
   isAddingComment = false,
   addingCommentItemId,
+  isDeletingComment = false,
+  deletingCommentId,
 }: CommentThreadProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [newComment, setNewComment] = useState('')
@@ -33,6 +39,12 @@ export default function CommentThread({
     if (newComment.trim() && !isThisItemAddingComment) {
       onAddComment(itemType, itemId, newComment.trim())
       setNewComment('')
+    }
+  }
+
+  const handleDelete = (commentId: string) => {
+    if (confirm('Delete this comment?')) {
+      onDeleteComment(commentId, itemType)
     }
   }
 
@@ -59,21 +71,42 @@ export default function CommentThread({
 
       {isExpanded && (
         <div className="mt-2 space-y-2">
-          {comments.map((comment) => (
-            <div
-              key={comment.id}
-              className="p-2 sm:p-3 rounded-lg text-sm"
-              style={{ backgroundColor: 'var(--border-light)' }}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-medium" style={{ color: 'var(--primary)' }}>
-                  {comment.username}
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(comment.createdAt)}</span>
+          {comments.map((comment) => {
+            const isOwner = comment.username === currentUsername
+            const isDeleting = isDeletingComment && deletingCommentId === comment.id
+            
+            return (
+              <div
+                key={comment.id}
+                className="p-2 sm:p-3 rounded-lg text-sm group relative"
+                style={{ backgroundColor: 'var(--border-light)' }}
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-medium" style={{ color: 'var(--primary)' }}>
+                    {comment.username}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(comment.createdAt)}</span>
+                    {isOwner && (
+                      <button
+                        onClick={() => handleDelete(comment.id)}
+                        disabled={isDeleting}
+                        className="p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        style={{ 
+                          background: 'var(--accent)',
+                          color: 'white',
+                        }}
+                        title="Delete comment"
+                      >
+                        {isDeleting ? <LoaderIcon size={12} /> : <TrashIcon size={12} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <p style={{ color: 'var(--text-secondary)' }}>{comment.content}</p>
               </div>
-              <p style={{ color: 'var(--text-secondary)' }}>{comment.content}</p>
-            </div>
-          ))}
+            )
+          })}
 
           <form onSubmit={handleSubmit} className="flex gap-2">
             <input

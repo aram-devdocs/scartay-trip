@@ -16,6 +16,8 @@ interface VotingState {
 interface CommentingState {
   isAddingComment: boolean
   addingCommentItemId?: string
+  isDeletingComment?: boolean
+  deletingCommentId?: string
 }
 
 interface MutationState {
@@ -31,6 +33,7 @@ interface FlightsSectionProps {
   currentUsername: string
   onVote: (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => void
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
+  onDeleteComment: (commentId: string, itemType: ItemType) => void
   onAdd: (data: Partial<Flight>) => void
   onUpdate: (data: Partial<Flight> & { id: string }) => void
   onDelete: (id: string) => void
@@ -54,6 +57,7 @@ export default function FlightsSection({
   currentUsername,
   onVote,
   onAddComment,
+  onDeleteComment,
   onAdd,
   onUpdate,
   onDelete,
@@ -418,8 +422,11 @@ export default function FlightsSection({
                     itemId={flight.id}
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
+                    onDeleteComment={onDeleteComment}
                     isAddingComment={commentingState.isAddingComment}
                     addingCommentItemId={commentingState.addingCommentItemId}
+                    isDeletingComment={commentingState.isDeletingComment}
+                    deletingCommentId={commentingState.deletingCommentId}
                   />
                 </>
               )}

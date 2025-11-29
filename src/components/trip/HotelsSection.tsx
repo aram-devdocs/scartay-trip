@@ -17,6 +17,8 @@ interface VotingState {
 interface CommentingState {
   isAddingComment: boolean
   addingCommentItemId?: string
+  isDeletingComment?: boolean
+  deletingCommentId?: string
 }
 
 interface MutationState {
@@ -32,6 +34,7 @@ interface HotelsSectionProps {
   currentUsername: string
   onVote: (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => void
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
+  onDeleteComment: (commentId: string, itemType: ItemType) => void
   onAdd: (data: Partial<Hotel>) => void
   onUpdate: (data: Partial<Hotel> & { id: string }) => void
   onDelete: (id: string) => void
@@ -59,6 +62,7 @@ export default function HotelsSection({
   currentUsername,
   onVote,
   onAddComment,
+  onDeleteComment,
   onAdd,
   onUpdate,
   onDelete,
@@ -476,8 +480,11 @@ export default function HotelsSection({
                     itemId={hotel.id}
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
+                    onDeleteComment={onDeleteComment}
                     isAddingComment={commentingState.isAddingComment}
                     addingCommentItemId={commentingState.addingCommentItemId}
+                    isDeletingComment={commentingState.isDeletingComment}
+                    deletingCommentId={commentingState.deletingCommentId}
                   />
                 </>
               )}

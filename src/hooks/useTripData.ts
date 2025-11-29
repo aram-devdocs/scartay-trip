@@ -168,6 +168,34 @@ export function useCommentMutation() {
   })
 }
 
+// Delete comment mutation
+export function useDeleteCommentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      commentId,
+      username,
+    }: {
+      commentId: string
+      username: string
+      itemType: ItemType
+    }) => {
+      const res = await fetch(`/api/comments?id=${commentId}&username=${encodeURIComponent(username)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to delete comment')
+      }
+      return res.json()
+    },
+    onSuccess: (_, { itemType }) => {
+      queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
+    },
+  })
+}
+
 type CrudItemType = 'flight' | 'hotel' | 'activity' | 'restaurant'
 
 function getApiPath(itemType: CrudItemType) {

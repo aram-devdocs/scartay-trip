@@ -8,6 +8,7 @@ import {
   useTripData,
   useVoteMutation,
   useCommentMutation,
+  useDeleteCommentMutation,
   useAddMutation,
   useUpdateMutation,
   useDeleteMutation,
@@ -55,6 +56,7 @@ export default function Home() {
   // Mutations
   const voteMutation = useVoteMutation()
   const commentMutation = useCommentMutation()
+  const deleteCommentMutation = useDeleteCommentMutation()
 
   const addFlightMutation = useAddMutation('flight')
   const addHotelMutation = useAddMutation('hotel')
@@ -81,6 +83,8 @@ export default function Home() {
   const commentingState = {
     isAddingComment: commentMutation.isPending,
     addingCommentItemId: commentMutation.variables?.itemId,
+    isDeletingComment: deleteCommentMutation.isPending,
+    deletingCommentId: deleteCommentMutation.variables?.commentId,
   }
 
   const getMutationState = (itemType: CrudItemType) => {
@@ -114,6 +118,17 @@ export default function Home() {
   const handleAddComment = (itemType: ItemType, itemId: string, content: string) => {
     if (!user) return
     commentMutation.mutate({ username: user.name, content, itemType, itemId })
+  }
+
+  const handleDeleteComment = (commentId: string, itemType: ItemType) => {
+    if (!user) return
+    deleteCommentMutation.mutate(
+      { commentId, username: user.name, itemType },
+      {
+        onSuccess: () => toast.success('Comment deleted!'),
+        onError: (error) => toast.error(error.message || 'Failed to delete comment'),
+      }
+    )
   }
 
   const handleAdd = (itemType: CrudItemType, data: Partial<Flight | Hotel | Activity | Restaurant>) => {
@@ -200,6 +215,7 @@ export default function Home() {
               currentUsername={user.name}
               onVote={handleVote}
               onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onAdd={(data) => handleAdd('flight', data)}
               onUpdate={(data) => handleUpdate('flight', data)}
               onDelete={(id) => handleDelete('flight', id)}
@@ -214,6 +230,7 @@ export default function Home() {
               currentUsername={user.name}
               onVote={handleVote}
               onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onAdd={(data) => handleAdd('hotel', data)}
               onUpdate={(data) => handleUpdate('hotel', data)}
               onDelete={(id) => handleDelete('hotel', id)}
@@ -228,6 +245,7 @@ export default function Home() {
               currentUsername={user.name}
               onVote={handleVote}
               onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onAdd={(data) => handleAdd('activity', data)}
               onUpdate={(data) => handleUpdate('activity', data)}
               onDelete={(id) => handleDelete('activity', id)}
@@ -242,6 +260,7 @@ export default function Home() {
               currentUsername={user.name}
               onVote={handleVote}
               onAddComment={handleAddComment}
+              onDeleteComment={handleDeleteComment}
               onAdd={(data) => handleAdd('restaurant', data)}
               onUpdate={(data) => handleUpdate('restaurant', data)}
               onDelete={(id) => handleDelete('restaurant', id)}
