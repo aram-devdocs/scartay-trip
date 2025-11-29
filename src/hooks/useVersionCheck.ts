@@ -4,15 +4,13 @@ import { useCallback, useEffect, useRef } from 'react'
 
 const VERSION_STORAGE_KEY = 'app_build_version'
 const RELOAD_TIMESTAMP_KEY = 'app_last_reload_timestamp'
+const LAST_CHECK_TIMESTAMP_KEY = 'app_last_version_check'
 const MIN_RELOAD_INTERVAL = 10000 // Don't reload more than once per 10 seconds
+const MIN_CHECK_INTERVAL = 5 * 60 * 1000 // Don't check more than once per 5 minutes
 
 interface VersionCheckOptions {
-  /** Interval in ms to check for updates (default: 30 seconds) */
-  checkInterval?: number
   /** Whether to check on visibility change (default: true) */
   checkOnVisibilityChange?: boolean
-  /** Whether to check on window focus (default: true) */
-  checkOnFocus?: boolean
   /** Whether auto-reload is enabled (default: true) */
   enabled?: boolean
 }
@@ -24,18 +22,28 @@ interface VersionCheckResult {
 
 /**
  * Hook to check for app version updates and automatically reload when a new version is detected.
- * Includes safeguards against infinite reload loops.
+ * 
+ * Checks happen on:
+ * - Initial app load (after 3 second delay)
+ * - When PWA becomes visible (e.g., switching back to the app)
+ * 
+ * To minimize server load:
+ * - Only checks once per 5 minutes maximum
+ * - No periodic polling - relies on user-triggered events
+ * - Checks are debounced and throttled
+ * 
+ * Safety features:
+ * - Prevents reload loops (won't reload more than once per 10 seconds)
+ * - Stores version in localStorage to persist across sessions
+ * - Only reloads when online and version check succeeds
  */
 export function useVersionCheck(options: VersionCheckOptions = {}): VersionCheckResult {
   const {
-    checkInterval = 30000,
     checkOnVisibilityChange = true,
-    checkOnFocus = true,
     enabled = true,
   } = options
 
   const isCheckingRef = useRef(false)
-  const lastCheckRef = useRef(0)
 
   /**
    * Safely get the stored version from localStorage
