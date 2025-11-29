@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Comment, ItemType } from '@/types'
-import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon, LoaderIcon, TrashIcon } from '@/components/icons/Icons'
+import { MessageCircleIcon, ChevronUpIcon, ChevronDownIcon, SendIcon, LoaderIcon, TrashIcon, PencilIcon, CheckIcon, XIcon } from '@/components/icons/Icons'
 import SwipeableRow from './SwipeableRow'
 
 interface CommentThreadProps {
@@ -12,10 +12,13 @@ interface CommentThreadProps {
   currentUsername: string
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
   onDeleteComment: (commentId: string, itemType: ItemType) => void
+  onEditComment: (commentId: string, itemType: ItemType, content: string) => void
   isAddingComment?: boolean
   addingCommentItemId?: string
   isDeletingComment?: boolean
   deletingCommentId?: string
+  isEditingComment?: boolean
+  editingCommentId?: string
 }
 
 export default function CommentThread({
@@ -25,15 +28,29 @@ export default function CommentThread({
   currentUsername,
   onAddComment,
   onDeleteComment,
+  onEditComment,
   isAddingComment = false,
   addingCommentItemId,
   isDeletingComment = false,
   deletingCommentId,
+  isEditingComment = false,
+  editingCommentId,
 }: CommentThreadProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [newComment, setNewComment] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const editInputRef = useRef<HTMLInputElement>(null)
 
   const isThisItemAddingComment = isAddingComment && addingCommentItemId === itemId
+
+  // Focus edit input when entering edit mode
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus()
+      editInputRef.current.select()
+    }
+  }, [editingId])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +63,33 @@ export default function CommentThread({
   const handleDelete = (commentId: string) => {
     if (confirm('Delete this comment?')) {
       onDeleteComment(commentId, itemType)
+    }
+  }
+
+  const handleStartEdit = (comment: Comment) => {
+    setEditingId(comment.id)
+    setEditContent(comment.content)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditContent('')
+  }
+
+  const handleSaveEdit = (commentId: string) => {
+    if (editContent.trim() && editContent.trim() !== '') {
+      onEditComment(commentId, itemType, editContent.trim())
+      setEditingId(null)
+      setEditContent('')
+    }
+  }
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, commentId: string) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSaveEdit(commentId)
+    } else if (e.key === 'Escape') {
+      handleCancelEdit()
     }
   }
 
@@ -75,6 +119,8 @@ export default function CommentThread({
           {comments.map((comment) => {
             const isOwner = comment.username === currentUsername
             const isDeleting = isDeletingComment && deletingCommentId === comment.id
+            const isEditing = isEditingComment && editingCommentId === comment.id
+            const isInEditMode = editingId === comment.id
             
             // For comments by other users, render without swipe functionality
             if (!isOwner) {
@@ -95,13 +141,72 @@ export default function CommentThread({
                 </div>
               )
             }
+
+            // If this comment is being edited inline, show the edit form
+            if (isInEditMode) {
+              return (
+                <div
+                  key={comment.id}
+                  className="comment-row p-2 sm:p-3 rounded-lg text-sm"
+                  style={{ backgroundColor: 'var(--border-light)' }}
+                  role="listitem"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium" style={{ color: 'var(--primary)' }}>
+                      {comment.username}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Editing...</span>
+                  </div>
+                  <input
+                    ref={editInputRef}
+                    type="text"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    onKeyDown={(e) => handleEditKeyDown(e, comment.id)}
+                    className="comment-edit-input"
+                    placeholder="Edit your comment..."
+                    disabled={isEditing}
+                  />
+                  <div className="comment-edit-actions">
+                    <button
+                      onClick={() => handleSaveEdit(comment.id)}
+                      disabled={!editContent.trim() || isEditing}
+                      className="comment-edit-btn comment-edit-btn-save"
+                    >
+                      {isEditing ? <LoaderIcon size={14} /> : <CheckIcon size={14} />}
+                      {isEditing ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={isEditing}
+                      className="comment-edit-btn comment-edit-btn-cancel"
+                    >
+                      <XIcon size={14} />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )
+            }
             
-            // For owner's comments, add swipe-to-delete and hover delete
+            // For owner's comments, add swipe actions (edit + delete) and hover buttons
             return (
               <SwipeableRow
                 key={comment.id}
-                onDelete={() => handleDelete(comment.id)}
-                isDeleting={isDeleting}
+                actions={[
+                  {
+                    type: 'edit',
+                    onAction: () => handleStartEdit(comment),
+                    isLoading: false,
+                    disabled: isDeleting,
+                  },
+                  {
+                    type: 'delete',
+                    onAction: () => handleDelete(comment.id),
+                    isLoading: isDeleting,
+                    disabled: false,
+                  },
+                ]}
                 className="comment-swipeable"
               >
                 <div
@@ -112,16 +217,32 @@ export default function CommentThread({
                     <span className="font-medium" style={{ color: 'var(--primary)' }}>
                       {comment.username}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(comment.createdAt)}</span>
-                      {/* Desktop hover delete button */}
+                      {/* Desktop hover action buttons */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleStartEdit(comment)
+                        }}
+                        disabled={isDeleting}
+                        className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        style={{ 
+                          background: 'var(--secondary)',
+                          color: 'white',
+                        }}
+                        title="Edit comment"
+                        aria-label="Edit comment"
+                      >
+                        <PencilIcon size={12} />
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDelete(comment.id)
                         }}
                         disabled={isDeleting}
-                        className="comment-delete-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="comment-action-btn p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                         style={{ 
                           background: 'var(--accent)',
                           color: 'white',

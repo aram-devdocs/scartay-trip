@@ -21,6 +21,8 @@ interface CommentingState {
   addingCommentItemId?: string
   isDeletingComment?: boolean
   deletingCommentId?: string
+  isEditingComment?: boolean
+  editingCommentId?: string
 }
 
 interface MutationState {
@@ -37,6 +39,7 @@ interface ActivitiesSectionProps {
   onVote: (itemType: ItemType, itemId: string, voteType: 'upvote' | 'downvote') => void
   onAddComment: (itemType: ItemType, itemId: string, content: string) => void
   onDeleteComment: (commentId: string, itemType: ItemType) => void
+  onEditComment: (commentId: string, itemType: ItemType, content: string) => void
   onAdd: (data: Partial<Activity>) => void
   onUpdate: (data: Partial<Activity> & { id: string }) => void
   onDelete: (id: string) => void
@@ -53,6 +56,7 @@ export default function ActivitiesSection({
   onVote,
   onAddComment,
   onDeleteComment,
+  onEditComment,
   onAdd,
   onUpdate,
   onDelete,
@@ -412,10 +416,13 @@ export default function ActivitiesSection({
                     currentUsername={currentUsername}
                     onAddComment={onAddComment}
                     onDeleteComment={onDeleteComment}
+                    onEditComment={onEditComment}
                     isAddingComment={commentingState.isAddingComment}
                     addingCommentItemId={commentingState.addingCommentItemId}
                     isDeletingComment={commentingState.isDeletingComment}
                     deletingCommentId={commentingState.deletingCommentId}
+                    isEditingComment={commentingState.isEditingComment}
+                    editingCommentId={commentingState.editingCommentId}
                   />
                 </>
               )}
