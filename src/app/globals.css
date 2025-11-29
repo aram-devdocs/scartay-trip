@@ -358,3 +358,137 @@ input::placeholder, textarea::placeholder {
     padding-top: calc(16px + env(safe-area-inset-top));
   }
 }
+
+/* Swipeable Row - iMessage-style swipe-to-delete */
+.swipeable-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.swipeable-row:focus-visible {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.swipeable-action-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  border-radius: 8px;
+}
+
+.swipeable-delete-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.swipeable-delete-btn:hover {
+  transform: scale(1.05);
+}
+
+.swipeable-delete-btn:active {
+  transform: scale(0.95);
+}
+
+.swipeable-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.swipeable-delete-text {
+  display: block;
+}
+
+.swipeable-content {
+  position: relative;
+  background: var(--background);
+  z-index: 1;
+  will-change: transform;
+}
+
+/* Swipe indicator - shows on touch devices */
+.swipe-indicator {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  animation: swipeHint 2s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+@keyframes swipeHint {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-50%) translateX(-4px);
+    opacity: 0.8;
+  }
+}
+
+/* Comment row specific styles */
+.comment-swipeable .comment-row {
+  margin: 0;
+}
+
+.comment-swipeable .swipeable-content {
+  background: transparent;
+}
+
+/* On touch devices, hide the hover delete button and show swipe indicator */
+@media (hover: none) and (pointer: coarse) {
+  .comment-delete-btn {
+    display: none !important;
+  }
+  
+  .swipe-indicator {
+    display: flex;
+  }
+  
+  .comment-row-owner {
+    padding-right: 28px; /* Make room for swipe indicator */
+  }
+}
+
+/* On desktop/mouse devices, hide swipe indicator and show hover delete */
+@media (hover: hover) and (pointer: fine) {
+  .swipe-indicator {
+    display: none !important;
+  }
+  
+  .comment-delete-btn {
+    display: flex;
+  }
+  
+  /* On desktop, also allow keyboard navigation for swipeable rows */
+  .swipeable-row:focus .swipeable-content {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+}
