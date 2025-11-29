@@ -12,6 +12,7 @@ interface VoteButtonsProps {
   isVoting?: boolean
   votingItemId?: string
   votingType?: 'upvote' | 'downvote'
+  isOffline?: boolean
 }
 
 export function getVoteScore(votes: Vote[]): number {
@@ -29,6 +30,7 @@ export default function VoteButtons({
   isVoting = false,
   votingItemId,
   votingType,
+  isOffline = false,
 }: VoteButtonsProps) {
   const upvotes = votes.filter((v) => v.voteType === 'upvote')
   const downvotes = votes.filter((v) => v.voteType === 'downvote')
@@ -40,6 +42,7 @@ export default function VoteButtons({
   const isUpvoteLoading = isVoting && votingItemId === itemId && votingType === 'upvote'
   const isDownvoteLoading = isVoting && votingItemId === itemId && votingType === 'downvote'
   const isAnyLoading = isUpvoteLoading || isDownvoteLoading
+  const isDisabled = isAnyLoading || isOffline
 
   return (
     <div
@@ -48,14 +51,14 @@ export default function VoteButtons({
     >
       <button
         onClick={() => onVote(itemType, itemId, 'upvote')}
-        disabled={isAnyLoading}
+        disabled={isDisabled}
         className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         style={{
           background: userUpvote ? 'var(--gradient-primary)' : 'var(--border-light)',
           color: userUpvote ? 'white' : 'var(--text-muted)',
           boxShadow: userUpvote ? 'var(--shadow-sm)' : 'none',
         }}
-        title="Upvote"
+        title={isOffline ? 'Voting unavailable offline' : 'Upvote'}
       >
         {isUpvoteLoading ? <LoaderIcon size={18} /> : <ArrowUpIcon size={18} />}
       </button>
@@ -71,14 +74,14 @@ export default function VoteButtons({
 
       <button
         onClick={() => onVote(itemType, itemId, 'downvote')}
-        disabled={isAnyLoading}
+        disabled={isDisabled}
         className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
         style={{
           background: userDownvote ? 'var(--gradient-accent)' : 'var(--border-light)',
           color: userDownvote ? 'white' : 'var(--text-muted)',
           boxShadow: userDownvote ? 'var(--shadow-sm)' : 'none',
         }}
-        title="Downvote"
+        title={isOffline ? 'Voting unavailable offline' : 'Downvote'}
       >
         {isDownvoteLoading ? <LoaderIcon size={18} /> : <ArrowDownIcon size={18} />}
       </button>

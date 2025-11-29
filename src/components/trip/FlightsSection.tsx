@@ -43,6 +43,7 @@ interface FlightsSectionProps {
   votingState: VotingState
   commentingState: CommentingState
   mutationState: MutationState
+  isOffline?: boolean
 }
 
 const emptyFlight = {
@@ -68,6 +69,7 @@ export default function FlightsSection({
   votingState,
   commentingState,
   mutationState,
+  isOffline = false,
 }: FlightsSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Flight>>({})
@@ -83,11 +85,13 @@ export default function FlightsSection({
   }, [flights])
 
   const handleEdit = (flight: Flight) => {
+    if (isOffline) return
     setEditingId(flight.id)
     setEditingData(flight)
   }
 
   const handleSave = () => {
+    if (isOffline) return
     if (editingId && editingData.travelerName) {
       onUpdate({ ...editingData, id: editingId } as Flight & { id: string })
       setEditingId(null)
@@ -101,6 +105,7 @@ export default function FlightsSection({
   }
 
   const handleDeleteClick = (id: string) => {
+    if (isOffline) return
     if (confirm('Delete this flight?')) {
       onDelete(id)
     }
@@ -108,6 +113,7 @@ export default function FlightsSection({
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isOffline) return
     if (newFlight.travelerName) {
       onAdd(newFlight)
       setNewFlight(emptyFlight)
@@ -131,7 +137,9 @@ export default function FlightsSection({
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
+          disabled={isOffline}
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isOffline ? 'Adding unavailable offline' : undefined}
         >
           {showAddForm ? (
             <>
@@ -147,7 +155,7 @@ export default function FlightsSection({
         </button>
       </div>
 
-      {showAddForm && (
+      {showAddForm && !isOffline && (
         <form
           onSubmit={handleAddSubmit}
           className="p-5 rounded-2xl"
@@ -291,7 +299,7 @@ export default function FlightsSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      disabled={mutationState.isUpdating && mutationState.updatingId === flight.id}
+                      disabled={(mutationState.isUpdating && mutationState.updatingId === flight.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
@@ -309,7 +317,7 @@ export default function FlightsSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(flight.id)}
-                      disabled={mutationState.isDeleting && mutationState.deletingId === flight.id}
+                      disabled={(mutationState.isDeleting && mutationState.deletingId === flight.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
@@ -337,14 +345,16 @@ export default function FlightsSection({
                       >
                         {flight.airline}
                       </span>
-                      <button
-                        onClick={() => handleEdit(flight)}
-                        className="p-2 rounded-full transition-all hover:scale-110"
-                        style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
-                        title="Edit"
-                      >
-                        <PencilIcon size={14} />
-                      </button>
+                      {!isOffline && (
+                        <button
+                          onClick={() => handleEdit(flight)}
+                          className="p-2 rounded-full transition-all hover:scale-110"
+                          style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
+                          title="Edit"
+                        >
+                          <PencilIcon size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -418,6 +428,7 @@ export default function FlightsSection({
                     isVoting={votingState.isVoting}
                     votingItemId={votingState.votingItemId}
                     votingType={votingState.votingType}
+                    isOffline={isOffline}
                   />
 
                   <CommentThread
@@ -434,6 +445,7 @@ export default function FlightsSection({
                     deletingCommentId={commentingState.deletingCommentId}
                     isEditingComment={commentingState.isEditingComment}
                     editingCommentId={commentingState.editingCommentId}
+                    isOffline={isOffline}
                   />
                 </>
               )}

@@ -46,6 +46,7 @@ interface ActivitiesSectionProps {
   votingState: VotingState
   commentingState: CommentingState
   mutationState: MutationState
+  isOffline?: boolean
 }
 
 const emptyActivity = { name: '', url: '', address: '', neighborhood: '', hours: '', daysClosed: '', price: '' }
@@ -63,6 +64,7 @@ export default function ActivitiesSection({
   votingState,
   commentingState,
   mutationState,
+  isOffline = false,
 }: ActivitiesSectionProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingData, setEditingData] = useState<Partial<Activity>>({})
@@ -110,11 +112,13 @@ export default function ActivitiesSection({
   }, [activities, filters])
 
   const handleEdit = (activity: Activity) => {
+    if (isOffline) return
     setEditingId(activity.id)
     setEditingData(activity)
   }
 
   const handleSave = () => {
+    if (isOffline) return
     if (editingId && editingData.name) {
       onUpdate({ ...editingData, id: editingId } as Activity & { id: string })
       setEditingId(null)
@@ -128,6 +132,7 @@ export default function ActivitiesSection({
   }
 
   const handleDeleteClick = (id: string) => {
+    if (isOffline) return
     if (confirm('Delete this activity?')) {
       onDelete(id)
     }
@@ -135,6 +140,7 @@ export default function ActivitiesSection({
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (isOffline) return
     if (newActivity.name) {
       onAdd(newActivity)
       setNewActivity(emptyActivity)
@@ -155,7 +161,9 @@ export default function ActivitiesSection({
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto"
+          disabled={isOffline}
+          className="btn btn-primary flex items-center justify-center gap-2 min-h-[44px] self-start sm:self-auto disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isOffline ? 'Adding unavailable offline' : undefined}
         >
           {showAddForm ? (
             <>
@@ -179,7 +187,7 @@ export default function ActivitiesSection({
         showCuisine={false}
       />
 
-      {showAddForm && (
+      {showAddForm && !isOffline && (
         <form
           onSubmit={handleAddSubmit}
           className="p-5 rounded-2xl"
@@ -317,7 +325,7 @@ export default function ActivitiesSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleSave}
-                      disabled={mutationState.isUpdating && mutationState.updatingId === activity.id}
+                      disabled={(mutationState.isUpdating && mutationState.updatingId === activity.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--gradient-primary)' }}
                     >
@@ -335,7 +343,7 @@ export default function ActivitiesSection({
                     </button>
                     <button
                       onClick={() => handleDeleteClick(activity.id)}
-                      disabled={mutationState.isDeleting && mutationState.deletingId === activity.id}
+                      disabled={(mutationState.isDeleting && mutationState.deletingId === activity.id) || isOffline}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-sm font-medium sm:ml-auto transition-all hover:scale-105 min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{ background: 'var(--accent)' }}
                     >
@@ -360,14 +368,16 @@ export default function ActivitiesSection({
                       >
                         {activity.price}
                       </span>
-                      <button
-                        onClick={() => handleEdit(activity)}
-                        className="p-2 rounded-full transition-all hover:scale-110"
-                        style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
-                        title="Edit"
-                      >
-                        <PencilIcon size={14} />
-                      </button>
+                      {!isOffline && (
+                        <button
+                          onClick={() => handleEdit(activity)}
+                          className="p-2 rounded-full transition-all hover:scale-110"
+                          style={{ background: 'var(--border-light)', color: 'var(--text-muted)' }}
+                          title="Edit"
+                        >
+                          <PencilIcon size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -407,6 +417,7 @@ export default function ActivitiesSection({
                     isVoting={votingState.isVoting}
                     votingItemId={votingState.votingItemId}
                     votingType={votingState.votingType}
+                    isOffline={isOffline}
                   />
 
                   <CommentThread
@@ -423,6 +434,7 @@ export default function ActivitiesSection({
                     deletingCommentId={commentingState.deletingCommentId}
                     isEditingComment={commentingState.isEditingComment}
                     editingCommentId={commentingState.editingCommentId}
+                    isOffline={isOffline}
                   />
                 </>
               )}

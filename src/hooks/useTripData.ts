@@ -1,7 +1,17 @@
 'use client'
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Flight, Hotel, Activity, Restaurant, ItemType, Vote, Comment } from '@/types'
+import { useQuery, useMutation, useQueryClient, UseMutationOptions } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { Flight, Hotel, Activity, Restaurant, ItemType } from '@/types'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
+
+// Custom error for offline mutations
+export class OfflineError extends Error {
+  constructor(message: string = 'This action is unavailable while offline') {
+    super(message)
+    this.name = 'OfflineError'
+  }
+}
 
 // Query keys
 export const tripKeys = {
@@ -11,9 +21,6 @@ export const tripKeys = {
   activities: () => [...tripKeys.all, 'activities'] as const,
   restaurants: () => [...tripKeys.all, 'restaurants'] as const,
 }
-
-// Types for items with votes and comments
-type TripItem = Flight | Hotel | Activity | Restaurant
 
 // Fetch functions
 const fetchFlights = async (): Promise<Flight[]> => {
@@ -111,11 +118,34 @@ function getQueryKey(itemType: ItemType) {
   }
 }
 
-// Vote mutation with optimistic updates
+/**
+ * Wrapper hook that makes mutations offline-aware.
+ * Automatically prevents mutations when offline and shows a toast.
+ */
+function useOfflineAwareMutation<TData, TError, TVariables, TContext = unknown>(
+  options: Omit<UseMutationOptions<TData, TError, TVariables, TContext>, 'mutationFn'> & {
+    mutationFn: (variables: TVariables) => Promise<TData>
+  }
+) {
+  const { isOffline } = useOnlineStatus()
+
+  return useMutation<TData, TError, TVariables, TContext>({
+    ...options,
+    mutationFn: async (variables: TVariables): Promise<TData> => {
+      if (isOffline) {
+        toast.error('This action is unavailable while offline')
+        throw new OfflineError()
+      }
+      return options.mutationFn(variables)
+    },
+  })
+}
+
+// Vote mutation
 export function useVoteMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async ({
       username,
       itemType,
@@ -135,71 +165,17 @@ export function useVoteMutation() {
       if (!res.ok) throw new Error('Failed to vote')
       return res.json()
     },
-    onMutate: async ({ username, itemType, itemId, voteType }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      // Snapshot current data
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically update the cache
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.map((item) => {
-          if (item.id !== itemId) return item
-
-          const votes = item.votes || []
-          const existingVote = votes.find((v) => v.username === username)
-
-          let newVotes: Vote[]
-
-          if (existingVote) {
-            if (existingVote.voteType === voteType) {
-              // Remove vote (toggle off)
-              newVotes = votes.filter((v) => v.username !== username)
-            } else {
-              // Change vote type
-              newVotes = votes.map((v) =>
-                v.username === username ? { ...v, voteType } : v
-              )
-            }
-          } else {
-            // Add new vote
-            const newVote: Vote = {
-              id: `temp-${Date.now()}`,
-              username,
-              voteType,
-              itemType,
-              itemId,
-              createdAt: new Date(),
-            }
-            newVotes = [...votes, newVote]
-          }
-
-          return { ...item, votes: newVotes }
-        })
-      })
-
-      return { previousData }
-    },
-    onError: (_error, { itemType }, context) => {
-      // Rollback on error
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: (_data, _error, { itemType }) => {
-      // Always refetch to ensure consistency
+    onSuccess: (_, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Comment mutation with optimistic updates
+// Comment mutation
 export function useCommentMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async ({
       username,
       content,
@@ -219,51 +195,17 @@ export function useCommentMutation() {
       if (!res.ok) throw new Error('Failed to add comment')
       return res.json()
     },
-    onMutate: async ({ username, content, itemType, itemId }) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically add the comment
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.map((item) => {
-          if (item.id !== itemId) return item
-
-          const newComment: Comment = {
-            id: `temp-${Date.now()}`,
-            username,
-            content,
-            itemType,
-            itemId,
-            createdAt: new Date(),
-          }
-
-          return {
-            ...item,
-            comments: [...(item.comments || []), newComment],
-          }
-        })
-      })
-
-      return { previousData }
-    },
-    onError: (_error, { itemType }, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: (_data, _error, { itemType }) => {
+    onSuccess: (_, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Delete comment mutation with optimistic updates
+// Delete comment mutation
 export function useDeleteCommentMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async ({
       commentId,
       username,
@@ -281,41 +223,17 @@ export function useDeleteCommentMutation() {
       }
       return res.json()
     },
-    onMutate: async ({ commentId, itemType }) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically remove the comment
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.map((item) => {
-          if (!item.comments?.some((c) => c.id === commentId)) return item
-          return {
-            ...item,
-            comments: item.comments.filter((c) => c.id !== commentId),
-          }
-        })
-      })
-
-      return { previousData }
-    },
-    onError: (_error, { itemType }, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: (_data, _error, { itemType }) => {
+    onSuccess: (_, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Edit comment mutation with optimistic updates
+// Edit comment mutation
 export function useEditCommentMutation() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async ({
       commentId,
       username,
@@ -337,33 +255,7 @@ export function useEditCommentMutation() {
       }
       return res.json()
     },
-    onMutate: async ({ commentId, content, itemType }) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically update the comment
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.map((item) => {
-          if (!item.comments?.some((c) => c.id === commentId)) return item
-          return {
-            ...item,
-            comments: item.comments.map((c) =>
-              c.id === commentId ? { ...c, content } : c
-            ),
-          }
-        })
-      })
-
-      return { previousData }
-    },
-    onError: (_error, { itemType }, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: (_data, _error, { itemType }) => {
+    onSuccess: (_, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
@@ -384,11 +276,11 @@ function getApiPath(itemType: CrudItemType) {
   }
 }
 
-// Add mutation with optimistic updates
+// Add mutation
 export function useAddMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async (data: Partial<Flight | Hotel | Activity | Restaurant>) => {
       const res = await fetch(`/api/${getApiPath(itemType)}`, {
         method: 'POST',
@@ -398,42 +290,17 @@ export function useAddMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to add')
       return res.json()
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Create optimistic item with temp ID
-      const optimisticItem = {
-        ...data,
-        id: `temp-${Date.now()}`,
-        votes: [],
-        comments: [],
-      } as TripItem
-
-      // Optimistically add to list
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        return [...(old || []), optimisticItem]
-      })
-
-      return { previousData }
-    },
-    onError: (_error, _data, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Update mutation with optimistic updates
+// Update mutation
 export function useUpdateMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async (data: Partial<Flight | Hotel | Activity | Restaurant> & { id: string }) => {
       const res = await fetch(`/api/${getApiPath(itemType)}`, {
         method: 'PUT',
@@ -443,39 +310,17 @@ export function useUpdateMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to update')
       return res.json()
     },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically update the item
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.map((item) =>
-          item.id === data.id
-            ? { ...item, ...data }
-            : item
-        )
-      })
-
-      return { previousData }
-    },
-    onError: (_error, _data, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Delete mutation with optimistic updates
+// Delete mutation
 export function useDeleteMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  return useOfflineAwareMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/${getApiPath(itemType)}?id=${id}`, {
         method: 'DELETE',
@@ -483,25 +328,7 @@ export function useDeleteMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to delete')
       return res.json()
     },
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
-
-      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
-
-      // Optimistically remove the item
-      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
-        if (!old) return old
-        return old.filter((item) => item.id !== id)
-      })
-
-      return { previousData }
-    },
-    onError: (_error, _data, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
-      }
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
