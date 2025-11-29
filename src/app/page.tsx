@@ -9,6 +9,7 @@ import {
   useVoteMutation,
   useCommentMutation,
   useDeleteCommentMutation,
+  useEditCommentMutation,
   useAddMutation,
   useUpdateMutation,
   useDeleteMutation,
@@ -57,6 +58,7 @@ export default function Home() {
   const voteMutation = useVoteMutation()
   const commentMutation = useCommentMutation()
   const deleteCommentMutation = useDeleteCommentMutation()
+  const editCommentMutation = useEditCommentMutation()
 
   const addFlightMutation = useAddMutation('flight')
   const addHotelMutation = useAddMutation('hotel')
@@ -85,6 +87,8 @@ export default function Home() {
     addingCommentItemId: commentMutation.variables?.itemId,
     isDeletingComment: deleteCommentMutation.isPending,
     deletingCommentId: deleteCommentMutation.variables?.commentId,
+    isEditingComment: editCommentMutation.isPending,
+    editingCommentId: editCommentMutation.variables?.commentId,
   }
 
   const getMutationState = (itemType: CrudItemType) => {
@@ -127,6 +131,17 @@ export default function Home() {
       {
         onSuccess: () => toast.success('Comment deleted!'),
         onError: (error) => toast.error(error.message || 'Failed to delete comment'),
+      }
+    )
+  }
+
+  const handleEditComment = (commentId: string, itemType: ItemType, content: string) => {
+    if (!user) return
+    editCommentMutation.mutate(
+      { commentId, username: user.name, content, itemType },
+      {
+        onSuccess: () => toast.success('Comment updated!'),
+        onError: (error) => toast.error(error.message || 'Failed to edit comment'),
       }
     )
   }
@@ -216,6 +231,7 @@ export default function Home() {
               onVote={handleVote}
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
+              onEditComment={handleEditComment}
               onAdd={(data) => handleAdd('flight', data)}
               onUpdate={(data) => handleUpdate('flight', data)}
               onDelete={(id) => handleDelete('flight', id)}
@@ -231,6 +247,7 @@ export default function Home() {
               onVote={handleVote}
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
+              onEditComment={handleEditComment}
               onAdd={(data) => handleAdd('hotel', data)}
               onUpdate={(data) => handleUpdate('hotel', data)}
               onDelete={(id) => handleDelete('hotel', id)}
@@ -246,6 +263,7 @@ export default function Home() {
               onVote={handleVote}
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
+              onEditComment={handleEditComment}
               onAdd={(data) => handleAdd('activity', data)}
               onUpdate={(data) => handleUpdate('activity', data)}
               onDelete={(id) => handleDelete('activity', id)}
@@ -261,6 +279,7 @@ export default function Home() {
               onVote={handleVote}
               onAddComment={handleAddComment}
               onDeleteComment={handleDeleteComment}
+              onEditComment={handleEditComment}
               onAdd={(data) => handleAdd('restaurant', data)}
               onUpdate={(data) => handleUpdate('restaurant', data)}
               onDelete={(id) => handleDelete('restaurant', id)}

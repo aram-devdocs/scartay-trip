@@ -1,25 +1,30 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { TrashIcon, LoaderIcon, ChevronLeftIcon } from '@/components/icons/Icons'
+import { TrashIcon, LoaderIcon, ChevronLeftIcon, PencilIcon } from '@/components/icons/Icons'
+
+interface SwipeAction {
+  type: 'edit' | 'delete'
+  onAction: () => void
+  isLoading?: boolean
+  disabled?: boolean
+}
 
 interface SwipeableRowProps {
   children: React.ReactNode
-  onDelete: () => void
-  isDeleting?: boolean
-  disabled?: boolean
+  actions: SwipeAction[]
   className?: string
+  contentClassName?: string
 }
 
-const SWIPE_THRESHOLD = 80 // Pixels to swipe before delete action is available
-const REVEAL_WIDTH = 72 // Width of the delete button area
+const SWIPE_THRESHOLD = 60 // Pixels to swipe before action is available
+const ACTION_WIDTH = 60 // Width of each action button
 
 export default function SwipeableRow({
   children,
-  onDelete,
-  isDeleting = false,
-  disabled = false,
+  actions,
   className = '',
+  contentClassName = '',
 }: SwipeableRowProps) {
   const rowRef = useRef<HTMLDivElement>(null)
   const [translateX, setTranslateX] = useState(0)
@@ -30,6 +35,10 @@ export default function SwipeableRow({
   const startY = useRef(0)
   const currentX = useRef(0)
   const isHorizontalSwipe = useRef<boolean | null>(null)
+
+  const totalActionsWidth = actions.length * ACTION_WIDTH
+  const isAnyLoading = actions.some(a => a.isLoading)
+  const isAnyDisabled = actions.some(a => a.disabled) || isAnyLoading
 
   // Detect touch device
   useEffect(() => {
@@ -61,17 +70,17 @@ export default function SwipeableRow({
   }, [isRevealed])
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (disabled || isDeleting) return
+    if (isAnyDisabled) return
     
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     currentX.current = e.touches[0].clientX
     isHorizontalSwipe.current = null
     setIsSwiping(true)
-  }, [disabled, isDeleting])
+  }, [isAnyDisabled])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isSwiping || disabled || isDeleting) return
+    if (!isSwiping || isAnyDisabled) return
 
     const touchX = e.touches[0].clientX
     const touchY = e.touches[0].clientY
@@ -97,21 +106,21 @@ export default function SwipeableRow({
     }
 
     // Calculate new position
-    const baseOffset = isRevealed ? -REVEAL_WIDTH : 0
+    const baseOffset = isRevealed ? -totalActionsWidth : 0
     let newTranslateX = baseOffset + diffX
 
     // Apply resistance at edges
     if (newTranslateX > 0) {
       // Swiping right past origin - strong resistance
       newTranslateX = newTranslateX * 0.2
-    } else if (newTranslateX < -REVEAL_WIDTH * 1.5) {
+    } else if (newTranslateX < -totalActionsWidth * 1.3) {
       // Swiping past reveal width - resistance
-      const overflow = Math.abs(newTranslateX) - REVEAL_WIDTH * 1.5
-      newTranslateX = -REVEAL_WIDTH * 1.5 - overflow * 0.3
+      const overflow = Math.abs(newTranslateX) - totalActionsWidth * 1.3
+      newTranslateX = -totalActionsWidth * 1.3 - overflow * 0.3
     }
 
     setTranslateX(newTranslateX)
-  }, [isSwiping, disabled, isDeleting, isRevealed])
+  }, [isSwiping, isAnyDisabled, isRevealed, totalActionsWidth])
 
   const handleTouchEnd = useCallback(() => {
     if (!isSwiping) return
@@ -129,35 +138,62 @@ export default function SwipeableRow({
       setTranslateX(0)
     } else if (shouldReveal) {
       setIsRevealed(true)
-      setTranslateX(-REVEAL_WIDTH)
+      setTranslateX(-totalActionsWidth)
     } else {
       // Snap to current state
-      setTranslateX(isRevealed ? -REVEAL_WIDTH : 0)
+      setTranslateX(isRevealed ? -totalActionsWidth : 0)
     }
 
     setIsSwiping(false)
     isHorizontalSwipe.current = null
-  }, [isSwiping, translateX, isRevealed])
+  }, [isSwiping, translateX, isRevealed, totalActionsWidth])
 
-  const handleDelete = () => {
-    if (!disabled && !isDeleting) {
-      onDelete()
+  const handleAction = (action: SwipeAction) => {
+    if (!action.disabled && !action.isLoading) {
+      action.onAction()
     }
   }
 
-  // Handle keyboard delete
+  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (!disabled && !isDeleting) {
+      const deleteAction = actions.find(a => a.type === 'delete')
+      if (deleteAction && !deleteAction.disabled && !deleteAction.isLoading) {
         e.preventDefault()
         if (confirm('Delete this comment?')) {
-          onDelete()
+          deleteAction.onAction()
         }
+      }
+    } else if (e.key === 'e' || e.key === 'E') {
+      const editAction = actions.find(a => a.type === 'edit')
+      if (editAction && !editAction.disabled && !editAction.isLoading) {
+        e.preventDefault()
+        editAction.onAction()
       }
     } else if (e.key === 'Escape' && isRevealed) {
       setIsRevealed(false)
       setTranslateX(0)
     }
+  }
+
+  const getActionIcon = (action: SwipeAction) => {
+    if (action.isLoading) {
+      return <LoaderIcon size={18} />
+    }
+    return action.type === 'edit' ? <PencilIcon size={18} /> : <TrashIcon size={18} />
+  }
+
+  const getActionLabel = (action: SwipeAction) => {
+    if (action.isLoading) {
+      return action.type === 'edit' ? 'Saving' : 'Deleting'
+    }
+    return action.type === 'edit' ? 'Edit' : 'Delete'
+  }
+
+  const getActionBackground = (action: SwipeAction) => {
+    return action.type === 'edit' 
+      ? 'linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%)'
+      : 'linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%)'
   }
 
   return (
@@ -167,35 +203,38 @@ export default function SwipeableRow({
       tabIndex={0}
       onKeyDown={handleKeyDown}
       role="listitem"
+      aria-label="Swipe left for actions, or press E to edit, Delete to remove"
     >
-      {/* Delete action background */}
+      {/* Action buttons background */}
       <div 
         className="swipeable-action-container"
         style={{
-          opacity: Math.min(Math.abs(translateX) / 40, 1),
+          width: `${totalActionsWidth}px`,
+          opacity: Math.min(Math.abs(translateX) / 30, 1),
         }}
       >
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting || disabled}
-          className="swipeable-delete-btn"
-          aria-label="Delete"
-          tabIndex={isRevealed ? 0 : -1}
-        >
-          {isDeleting ? (
-            <LoaderIcon size={20} />
-          ) : (
-            <>
-              <TrashIcon size={20} />
-              <span className="swipeable-delete-text">Delete</span>
-            </>
-          )}
-        </button>
+        {actions.map((action) => (
+          <button
+            key={action.type}
+            onClick={() => handleAction(action)}
+            disabled={action.isLoading || action.disabled}
+            className="swipeable-action-btn"
+            style={{
+              background: getActionBackground(action),
+              width: `${ACTION_WIDTH}px`,
+            }}
+            aria-label={getActionLabel(action)}
+            tabIndex={isRevealed ? 0 : -1}
+          >
+            {getActionIcon(action)}
+            <span className="swipeable-action-text">{getActionLabel(action)}</span>
+          </button>
+        ))}
       </div>
 
       {/* Swipeable content */}
       <div
-        className="swipeable-content"
+        className={`swipeable-content ${contentClassName}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -208,12 +247,13 @@ export default function SwipeableRow({
         {children}
         
         {/* Swipe indicator for mobile */}
-        {isTouchDevice && !disabled && (
+        {isTouchDevice && !isAnyDisabled && (
           <div 
             className="swipe-indicator"
             style={{
               opacity: isRevealed ? 0 : 0.5,
             }}
+            aria-hidden="true"
           >
             <ChevronLeftIcon size={14} />
           </div>

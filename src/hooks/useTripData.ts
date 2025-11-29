@@ -196,6 +196,38 @@ export function useDeleteCommentMutation() {
   })
 }
 
+// Edit comment mutation
+export function useEditCommentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      commentId,
+      username,
+      content,
+    }: {
+      commentId: string
+      username: string
+      content: string
+      itemType: ItemType
+    }) => {
+      const res = await fetch('/api/comments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: commentId, username, content }),
+      })
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to edit comment')
+      }
+      return res.json()
+    },
+    onSuccess: (_, { itemType }) => {
+      queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
+    },
+  })
+}
+
 type CrudItemType = 'flight' | 'hotel' | 'activity' | 'restaurant'
 
 function getApiPath(itemType: CrudItemType) {

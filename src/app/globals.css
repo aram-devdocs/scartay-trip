@@ -359,7 +359,7 @@ input::placeholder, textarea::placeholder {
   }
 }
 
-/* Swipeable Row - iMessage-style swipe-to-delete */
+/* Swipeable Row - iMessage-style swipe actions */
 .swipeable-row {
   position: relative;
   overflow: hidden;
@@ -377,47 +377,49 @@ input::placeholder, textarea::placeholder {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 80px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  align-items: stretch;
+  justify-content: flex-end;
   border-radius: 8px;
+  overflow: hidden;
 }
 
-.swipeable-delete-btn {
+.swipeable-action-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 100%;
+  gap: 2px;
   height: 100%;
+  min-height: 100%;
   color: white;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: filter 0.15s ease, opacity 0.15s ease;
+  border: none;
+  padding: 8px 4px;
 }
 
-.swipeable-delete-btn:hover {
-  transform: scale(1.05);
+.swipeable-action-btn:hover {
+  filter: brightness(1.1);
 }
 
-.swipeable-delete-btn:active {
-  transform: scale(0.95);
+.swipeable-action-btn:active {
+  filter: brightness(0.9);
 }
 
-.swipeable-delete-btn:disabled {
+.swipeable-action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+  filter: none;
 }
 
-.swipeable-delete-text {
+.swipeable-action-text {
   display: block;
+  line-height: 1;
 }
 
 .swipeable-content {
@@ -460,9 +462,9 @@ input::placeholder, textarea::placeholder {
   background: transparent;
 }
 
-/* On touch devices, hide the hover delete button and show swipe indicator */
+/* On touch devices, hide the hover action buttons and show swipe indicator */
 @media (hover: none) and (pointer: coarse) {
-  .comment-delete-btn {
+  .comment-action-btn {
     display: none !important;
   }
   
@@ -475,13 +477,13 @@ input::placeholder, textarea::placeholder {
   }
 }
 
-/* On desktop/mouse devices, hide swipe indicator and show hover delete */
+/* On desktop/mouse devices, hide swipe indicator and show hover actions */
 @media (hover: hover) and (pointer: fine) {
   .swipe-indicator {
     display: none !important;
   }
   
-  .comment-delete-btn {
+  .comment-action-btn {
     display: flex;
   }
   
@@ -491,4 +493,68 @@ input::placeholder, textarea::placeholder {
     outline-offset: 2px;
     border-radius: 8px;
   }
+}
+
+/* Edit modal / inline editing styles */
+.comment-edit-input {
+  background: var(--surface-elevated);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 8px 12px;
+  width: 100%;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.comment-edit-input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(255, 45, 146, 0.2);
+}
+
+.comment-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.comment-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  min-height: 32px;
+}
+
+.comment-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.comment-edit-btn-save {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.comment-edit-btn-save:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.comment-edit-btn-cancel {
+  background: var(--border-light);
+  color: var(--text-secondary);
+}
+
+.comment-edit-btn-cancel:hover:not(:disabled) {
+  background: var(--border);
+  color: var(--text-primary);
 }

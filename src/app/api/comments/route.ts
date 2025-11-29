@@ -56,6 +56,49 @@ export async function POST(request: Request) {
   }
 }
 
+// Edit a comment
+export async function PATCH(request: Request) {
+  try {
+    const { id, username, content } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing comment id' }, { status: 400 })
+    }
+
+    if (!username) {
+      return NextResponse.json({ error: 'Missing username' }, { status: 400 })
+    }
+
+    if (!content || !content.trim()) {
+      return NextResponse.json({ error: 'Comment content cannot be empty' }, { status: 400 })
+    }
+
+    // First, verify the comment exists and belongs to the user
+    const comment = await prisma.comment.findUnique({
+      where: { id },
+    })
+
+    if (!comment) {
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
+    }
+
+    if (comment.username !== username) {
+      return NextResponse.json({ error: 'You can only edit your own comments' }, { status: 403 })
+    }
+
+    // Update the comment
+    const updatedComment = await prisma.comment.update({
+      where: { id },
+      data: { content: content.trim() },
+    })
+
+    return NextResponse.json(updatedComment)
+  } catch (error) {
+    console.error('Error editing comment:', error)
+    return NextResponse.json({ error: 'Failed to edit comment' }, { status: 500 })
+  }
+}
+
 // Delete a comment
 export async function DELETE(request: Request) {
   try {
