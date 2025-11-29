@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Flight, Hotel, Activity, Restaurant, ItemType } from '@/types'
+import { Flight, Hotel, Activity, Restaurant, ItemType, Vote, Comment } from '@/types'
 
 // Query keys
 export const tripKeys = {
@@ -11,6 +11,9 @@ export const tripKeys = {
   activities: () => [...tripKeys.all, 'activities'] as const,
   restaurants: () => [...tripKeys.all, 'restaurants'] as const,
 }
+
+// Types for items with votes and comments
+type TripItem = Flight | Hotel | Activity | Restaurant
 
 // Fetch functions
 const fetchFlights = async (): Promise<Flight[]> => {
@@ -108,7 +111,7 @@ function getQueryKey(itemType: ItemType) {
   }
 }
 
-// Vote mutation
+// Vote mutation with optimistic updates
 export function useVoteMutation() {
   const queryClient = useQueryClient()
 
@@ -132,13 +135,67 @@ export function useVoteMutation() {
       if (!res.ok) throw new Error('Failed to vote')
       return res.json()
     },
-    onSuccess: (_, { itemType }) => {
+    onMutate: async ({ username, itemType, itemId, voteType }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      // Snapshot current data
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically update the cache
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.map((item) => {
+          if (item.id !== itemId) return item
+
+          const votes = item.votes || []
+          const existingVote = votes.find((v) => v.username === username)
+
+          let newVotes: Vote[]
+
+          if (existingVote) {
+            if (existingVote.voteType === voteType) {
+              // Remove vote (toggle off)
+              newVotes = votes.filter((v) => v.username !== username)
+            } else {
+              // Change vote type
+              newVotes = votes.map((v) =>
+                v.username === username ? { ...v, voteType } : v
+              )
+            }
+          } else {
+            // Add new vote
+            const newVote: Vote = {
+              id: `temp-${Date.now()}`,
+              username,
+              voteType,
+              itemType,
+              itemId,
+              createdAt: new Date(),
+            }
+            newVotes = [...votes, newVote]
+          }
+
+          return { ...item, votes: newVotes }
+        })
+      })
+
+      return { previousData }
+    },
+    onError: (_error, { itemType }, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: (_data, _error, { itemType }) => {
+      // Always refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Comment mutation
+// Comment mutation with optimistic updates
 export function useCommentMutation() {
   const queryClient = useQueryClient()
 
@@ -162,13 +219,47 @@ export function useCommentMutation() {
       if (!res.ok) throw new Error('Failed to add comment')
       return res.json()
     },
-    onSuccess: (_, { itemType }) => {
+    onMutate: async ({ username, content, itemType, itemId }) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically add the comment
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.map((item) => {
+          if (item.id !== itemId) return item
+
+          const newComment: Comment = {
+            id: `temp-${Date.now()}`,
+            username,
+            content,
+            itemType,
+            itemId,
+            createdAt: new Date(),
+          }
+
+          return {
+            ...item,
+            comments: [...(item.comments || []), newComment],
+          }
+        })
+      })
+
+      return { previousData }
+    },
+    onError: (_error, { itemType }, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: (_data, _error, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Delete comment mutation
+// Delete comment mutation with optimistic updates
 export function useDeleteCommentMutation() {
   const queryClient = useQueryClient()
 
@@ -190,13 +281,37 @@ export function useDeleteCommentMutation() {
       }
       return res.json()
     },
-    onSuccess: (_, { itemType }) => {
+    onMutate: async ({ commentId, itemType }) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically remove the comment
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.map((item) => {
+          if (!item.comments?.some((c) => c.id === commentId)) return item
+          return {
+            ...item,
+            comments: item.comments.filter((c) => c.id !== commentId),
+          }
+        })
+      })
+
+      return { previousData }
+    },
+    onError: (_error, { itemType }, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: (_data, _error, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Edit comment mutation
+// Edit comment mutation with optimistic updates
 export function useEditCommentMutation() {
   const queryClient = useQueryClient()
 
@@ -222,7 +337,33 @@ export function useEditCommentMutation() {
       }
       return res.json()
     },
-    onSuccess: (_, { itemType }) => {
+    onMutate: async ({ commentId, content, itemType }) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically update the comment
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.map((item) => {
+          if (!item.comments?.some((c) => c.id === commentId)) return item
+          return {
+            ...item,
+            comments: item.comments.map((c) =>
+              c.id === commentId ? { ...c, content } : c
+            ),
+          }
+        })
+      })
+
+      return { previousData }
+    },
+    onError: (_error, { itemType }, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: (_data, _error, { itemType }) => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
@@ -243,7 +384,7 @@ function getApiPath(itemType: CrudItemType) {
   }
 }
 
-// Add mutation
+// Add mutation with optimistic updates
 export function useAddMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
@@ -257,13 +398,38 @@ export function useAddMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to add')
       return res.json()
     },
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Create optimistic item with temp ID
+      const optimisticItem = {
+        ...data,
+        id: `temp-${Date.now()}`,
+        votes: [],
+        comments: [],
+      } as TripItem
+
+      // Optimistically add to list
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        return [...(old || []), optimisticItem]
+      })
+
+      return { previousData }
+    },
+    onError: (_error, _data, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Update mutation
+// Update mutation with optimistic updates
 export function useUpdateMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
@@ -277,13 +443,35 @@ export function useUpdateMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to update')
       return res.json()
     },
-    onSuccess: () => {
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically update the item
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.map((item) =>
+          item.id === data.id
+            ? { ...item, ...data }
+            : item
+        )
+      })
+
+      return { previousData }
+    },
+    onError: (_error, _data, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
 }
 
-// Delete mutation
+// Delete mutation with optimistic updates
 export function useDeleteMutation(itemType: CrudItemType) {
   const queryClient = useQueryClient()
 
@@ -295,7 +483,25 @@ export function useDeleteMutation(itemType: CrudItemType) {
       if (!res.ok) throw new Error('Failed to delete')
       return res.json()
     },
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: getQueryKey(itemType) })
+
+      const previousData = queryClient.getQueryData<TripItem[]>(getQueryKey(itemType))
+
+      // Optimistically remove the item
+      queryClient.setQueryData<TripItem[]>(getQueryKey(itemType), (old) => {
+        if (!old) return old
+        return old.filter((item) => item.id !== id)
+      })
+
+      return { previousData }
+    },
+    onError: (_error, _data, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(getQueryKey(itemType), context.previousData)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: getQueryKey(itemType) })
     },
   })
